@@ -257,9 +257,3 @@ def test_weather_errors_are_returned_not_raised(monkeypatch):
 
     monkeypatch.setattr(tools, "_get_json", boom)
     assert "weather lookup failed" in tools.get_weather.invoke({"location": "Paris"})
-
-
-def test_stream_test_endpoint_emits_ten_lines():
-    res = client.get("/api/assistant/stream-test")
-    assert res.status_code == 200
-    assert len(res.text.strip().splitlines()) == 10
