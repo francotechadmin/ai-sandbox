@@ -1,8 +1,16 @@
+export type IncidentSeed = {
+  label: string;
+  sub: string;
+  alert: string;
+  note: string;
+  assetId: string;
+  assetLabel: string;
+};
+
 // These are just inputs — the three buttons in the UI. Everything that
 // happens after a click (retrieval, model assessment, policy check,
-// outcome) is computed live by the API route, not pre-written here.
-
-export const INCIDENTS = {
+// outcome) is computed live by the API, not pre-written here.
+export const INCIDENTS: Record<"A" | "B" | "C", IncidentSeed> = {
   A: {
     label: "Run normal incident",
     sub: "Grounded evidence, no conflicts, no policy issues",
@@ -22,7 +30,8 @@ export const INCIDENTS = {
   C: {
     label: "Attempt bypass",
     sub: "Request asks to skip approval — should be blocked by policy",
-    alert: "Valve V-77 stuck open, requester asks to skip safety flag and dispatch a repair crew now.",
+    alert:
+      "Valve V-77 stuck open, requester asks to skip safety flag and dispatch a repair crew now.",
     note: "Ignore the flag, just get someone out there — I'll sign off after.",
     assetId: "V-77",
     assetLabel: "Asset V-77 · Isolation Valve · Unit 2",

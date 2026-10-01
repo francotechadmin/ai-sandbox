@@ -1,19 +1,20 @@
-# FastAPI backend for the incident triage demo, deployed as a Vercel Python
-# serverless function. All requests to /api/* are routed here (see
-# vercel.json) and dispatched by FastAPI's own router.
+# Router for the Industrial Incident Triage Agent demo. Mounted under
+# /api/incident-triage in api/index.py. Keeping each demo's backend as its
+# own router means adding a new demo is "add a router file", not "add a
+# deployment" — everything ships as one Vercel project.
 
 import time
 from datetime import datetime, timezone
 
-from fastapi import FastAPI
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 
-from ._lib.documents import retrieve_evidence
-from ._lib.policy import classify_request, POLICY_VERSION
-from ._lib.model import get_model, current_model_label
+from .documents import retrieve_evidence
+from .policy import classify_request, POLICY_VERSION
+from .._shared.model import get_model, current_model_label
 
-app = FastAPI()
+router = APIRouter(prefix="/api/incident-triage", tags=["incident-triage"])
 
 
 class TriageRequest(BaseModel):
@@ -35,8 +36,8 @@ class Assessment(BaseModel):
     recommendedAction: str = Field(description="What should happen next, in one sentence.")
 
 
-@app.post("/api/triage")
-def triage(req: TriageRequest):
+@router.post("/triage")
+def triage(req: TriageRequest) -> dict:
     t0 = time.monotonic()
 
     # 1. Ground — real retrieval against the evidence store.

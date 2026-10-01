@@ -1,36 +1,76 @@
 # AI Sandbox
 
-A growing set of small, self-contained demos showing what's possible with applied
-AI agent systems — the kind of thing I build for clients through my consulting
-practice. Each one is a standalone app under `apps/`, meant to be cloned, run
-locally, and walked through live.
+A set of standalone AI workflow demos showing what an applied AI build can
+look like — the kind of thing I build for clients through my consulting
+practice. One deployment, one URL, a landing page that links into each demo.
+
+## Live
+
+Deployed on Vercel — _add link here after deploy_.
+
+## Architecture
+
+One Next.js (TypeScript) app serves every demo's frontend as a route, and
+one FastAPI (typed Python) app serves every demo's backend as a mounted
+router. Both build into a single Vercel project — no per-demo deployments,
+no CORS, one thing to monitor.
+
+```
+app/
+  page.tsx                  # landing page — lists every demo (app/demos.ts)
+  demos.ts                  # the registry; add one entry here per new demo
+  <demo-slug>/
+    page.tsx                # that demo's UI
+    lib/                    # frontend-only data for that demo
+    README.md               # what the demo shows, what's real vs. simulated
+
+api/
+  index.py                  # single FastAPI app; includes one router per demo
+  _shared/
+    model.py                # LangChain model factory, shared across demos
+  <demo_slug>/
+    router.py                # FastAPI APIRouter, mounted at /api/<demo-slug>
+    documents.py, policy.py, ...  # demo-specific logic, typed
+
+vercel.json                 # rewrites all /api/* to the one FastAPI app
+tsconfig.json                # strict TypeScript across the frontend
+```
 
 ## Demos
 
-| Demo | What it shows | Status |
-|---|---|---|
-| [`incident-triage-agent`](./apps/incident-triage-agent) | A bounded industrial-operations agent: grounded evidence, deterministic policy gates, human approval, full audit trail. | ✅ live |
+| Demo | What it shows |
+|---|---|
+| [`incident-triage`](./app/incident-triage) | A bounded industrial-operations agent: grounded evidence, a real LangChain LLM call, a deterministic policy gate, full trace. |
 
-More workflows will land here over time (document/contract review, customer-support
-triage, internal knowledge-base Q&A, and similar patterns), each as its own PR under
-`apps/`.
+## Adding a new demo
 
-## Structure
+1. Add an entry to `app/demos.ts` — name, slug, description.
+2. Create `app/<slug>/page.tsx` for the frontend.
+3. If it needs a backend, create `api/<slug>/router.py` as a FastAPI
+   `APIRouter(prefix="/api/<slug>")`, and mount it in `api/index.py`.
+4. Add `app/<slug>/README.md` describing what's real vs. simulated in the
+   demo — a CTO reading this repo should be able to tell at a glance what's
+   production-shaped and what's a stand-in.
+5. One PR, same repo, same deployment. Nothing else to configure.
 
-```
-apps/
-  incident-triage-agent/   # Next.js app — see its own README to run it
-```
-
-Each app is independent: its own `package.json`, its own README with run
-instructions. Nothing here shares a build system or deploy pipeline on purpose —
-that keeps each demo easy to hand to a prospective client as a standalone repo
-later, if needed.
-
-## Running a demo locally
+## Local development
 
 ```bash
-cd apps/<demo-name>
 npm install
-npm run dev
+npm run dev        # Next.js frontend, http://localhost:3000
+
+pip install -r api/requirements.txt
+uvicorn api.index:app --reload --port 8000   # FastAPI backend
+```
+
+(In production both are served from the same Vercel deployment; locally
+they run as two processes since Vercel's dev server isn't available here.)
+
+## Environment variables
+
+```
+MODEL_PROVIDER=anthropic        # or "openai" — shared across all demos
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+MODEL_NAME=claude-sonnet-5      # optional override
 ```
