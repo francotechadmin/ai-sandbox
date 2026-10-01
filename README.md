@@ -26,11 +26,9 @@ app/
 
 api/
   index.py                  # single FastAPI app; includes one router per demo
-  _shared/
-    model.py                # LangChain model factory, shared across demos
   <demo_slug>/
     router.py                # FastAPI APIRouter, mounted at /api/<demo-slug>
-    documents.py, policy.py, ...  # demo-specific logic, typed
+    ...                     # demo-specific logic, typed
 
 vercel.json                 # rewrites all /api/* to the one FastAPI app
 tsconfig.json                # strict TypeScript across the frontend
@@ -40,8 +38,7 @@ tsconfig.json                # strict TypeScript across the frontend
 
 | Demo | What it shows |
 |---|---|
-| [`incident-triage`](./app/incident-triage) | A bounded industrial-operations agent: grounded evidence, a real LangChain LLM call, a deterministic policy gate, full trace. |
-| [`assistant`](./app/assistant) | A streaming chat agent: model picker, backend-handled reasoning toggle, live tool-call rendering, and a system prompt edited in the UI. |
+| [`assistant`](./app/assistant) | A streaming chat agent: model picker, backend-handled reasoning, live tool-call rendering, and a system prompt edited in the UI. |
 
 ## Adding a new demo
 

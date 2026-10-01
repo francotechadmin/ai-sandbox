@@ -6,9 +6,7 @@
 from fastapi import FastAPI
 
 from .assistant.router import router as assistant_router
-from .incident_triage.router import router as incident_triage_router
 
 app = FastAPI(title="AI Sandbox API")
 
-app.include_router(incident_triage_router)
 app.include_router(assistant_router)
