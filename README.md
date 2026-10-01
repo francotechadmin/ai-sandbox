@@ -41,6 +41,7 @@ tsconfig.json                # strict TypeScript across the frontend
 | Demo | What it shows |
 |---|---|
 | [`incident-triage`](./app/incident-triage) | A bounded industrial-operations agent: grounded evidence, a real LangChain LLM call, a deterministic policy gate, full trace. |
+| [`assistant`](./app/assistant) | A streaming chat agent: model picker, backend-handled reasoning toggle, live tool-call rendering, and a system prompt edited in the UI. |
 
 ## Adding a new demo
 
@@ -59,8 +60,9 @@ tsconfig.json                # strict TypeScript across the frontend
 npm install
 npm run dev        # Next.js frontend, http://localhost:3000
 
-pip install -r api/requirements.txt
+pip install -r api/requirements-dev.txt
 uvicorn api.index:app --reload --port 8000   # FastAPI backend
+python -m pytest api/tests                   # backend tests
 ```
 
 (In production both are served from the same Vercel deployment; locally

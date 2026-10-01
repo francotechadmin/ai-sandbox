@@ -15,4 +15,11 @@ export const DEMOS: Demo[] = [
       "A bounded operations agent: grounded evidence retrieval, a real LLM assessment via LangChain, and a deterministic policy gate that can override the model.",
     status: "live",
   },
+  {
+    slug: "assistant",
+    name: "Assistant",
+    description:
+      "A streaming chat agent with a model picker, a backend-handled reasoning toggle, tool calls rendered live, and a system prompt you edit in the UI.",
+    status: "in-progress",
+  },
 ];
