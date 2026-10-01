@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import {
+  ActionBarPrimitive,
   AssistantRuntimeProvider,
+  AuiIf,
   ComposerPrimitive,
   ErrorPrimitive,
   MessagePrimitive,
@@ -11,7 +13,9 @@ import {
 } from "@assistant-ui/react";
 import { convertState } from "../lib/convert";
 import type { ChatState, Settings, StateMessage } from "../lib/types";
-import { ReasoningPart, TextPart, ToolCallPart } from "./Parts";
+import { ArrowDownIcon, ArrowUpIcon, CheckIcon, CopyIcon, SquareIcon } from "lucide-react";
+import { Markdown } from "./Markdown";
+import { ReasoningPart, ToolCallPart } from "./Parts";
 
 const EMPTY: ChatState = { messages: [] };
 
@@ -32,9 +36,9 @@ function errorText(error: Error): string {
 
 function UserMessage() {
   return (
-    <MessagePrimitive.Root className="flex justify-end" data-testid="user-message">
-      <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-panel2 px-3.5 py-2 text-[14px]">
-        <MessagePrimitive.Parts components={{ Text: TextPart }} />
+    <MessagePrimitive.Root className="flex justify-end px-2" data-testid="user-message">
+      <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-panel2 px-4 py-2 text-[15px] leading-relaxed">
+        <MessagePrimitive.Parts />
       </div>
     </MessagePrimitive.Root>
   );
@@ -42,23 +46,57 @@ function UserMessage() {
 
 function AssistantMessage() {
   return (
-    <MessagePrimitive.Root className="flex flex-col gap-2" data-testid="assistant-message">
-      <MessagePrimitive.Parts
-        components={{
-          Text: TextPart,
-          Reasoning: ReasoningPart,
-          tools: { Fallback: ToolCallPart },
-        }}
-      />
-      <MessagePrimitive.Error>
-        <div
-          className="rounded-lg border border-[#4a2a26] bg-[#301c1a] px-3 py-2 text-[13px] text-red"
-          data-testid="message-error"
-        >
-          <ErrorPrimitive.Message />
-        </div>
-      </MessagePrimitive.Error>
+    <MessagePrimitive.Root className="px-2" data-testid="assistant-message">
+      <div className="break-words text-[15px] leading-relaxed">
+        <MessagePrimitive.Parts
+          components={{
+            Text: Markdown,
+            Reasoning: ReasoningPart,
+            tools: { Fallback: ToolCallPart },
+          }}
+        />
+        <MessagePrimitive.Error>
+          <div
+            className="mt-2 rounded-lg border border-[#4a2a26] bg-[#301c1a] px-3 py-2 text-[13px] text-red"
+            data-testid="message-error"
+          >
+            <ErrorPrimitive.Message />
+          </div>
+        </MessagePrimitive.Error>
+      </div>
+      <ActionBarPrimitive.Root
+        hideWhenRunning
+        autohide="not-last"
+        className="-ms-1 mt-1 flex gap-1 text-muted"
+      >
+        <ActionBarPrimitive.Copy asChild>
+          <button
+            type="button"
+            aria-label="Copy message"
+            title="Copy"
+            className="rounded-md p-1.5 transition-colors hover:bg-panel2 hover:text-text [&_svg]:size-4"
+          >
+            <AuiIf condition={(s) => s.message.isCopied}>
+              <CheckIcon />
+            </AuiIf>
+            <AuiIf condition={(s) => !s.message.isCopied}>
+              <CopyIcon />
+            </AuiIf>
+          </button>
+        </ActionBarPrimitive.Copy>
+      </ActionBarPrimitive.Root>
     </MessagePrimitive.Root>
+  );
+}
+
+function Welcome() {
+  return (
+    <div className="flex flex-1 flex-col justify-center px-2 pb-10">
+      <p className="text-2xl font-medium tracking-tight">How can I help you today?</p>
+      <p className="mt-2 text-sm text-muted">
+        Pick a model and edit the system prompt on the right. With the calculator on, try “what is 1234 * 5678?”.
+      </p>
+    </div>
   );
 }
 
@@ -110,46 +148,59 @@ export function Chat({ settings }: { settings: Settings }) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <ThreadPrimitive.Root className="flex h-full min-h-0 flex-col">
-        <ThreadPrimitive.Viewport className="flex-1 overflow-y-auto px-5 py-5">
-          <div className="mx-auto flex max-w-[760px] flex-col gap-4">
+        <ThreadPrimitive.Viewport className="flex flex-1 flex-col overflow-y-auto scroll-smooth px-5 pt-6">
+          <div className="mx-auto flex w-full max-w-[44rem] flex-1 flex-col gap-6">
             <ThreadPrimitive.Empty>
-              <div className="py-16 text-center text-sm text-muted">
-                Ask anything. With the calculator enabled, try “what is 1234 * 5678?”.
-              </div>
+              <Welcome />
             </ThreadPrimitive.Empty>
             <ThreadPrimitive.Messages>
               {({ message }) => (message.role === "user" ? <UserMessage /> : <AssistantMessage />)}
             </ThreadPrimitive.Messages>
           </div>
-        </ThreadPrimitive.Viewport>
 
-        <div className="border-t border-line px-5 py-3">
-          <ComposerPrimitive.Root className="mx-auto flex max-w-[760px] items-end gap-2 rounded-xl border border-line bg-panel px-3 py-2 focus-within:border-[#3a4451]">
-            <ComposerPrimitive.Input
-              rows={1}
-              autoFocus
-              placeholder="Message the assistant…"
-              className="max-h-40 flex-1 resize-none bg-transparent py-1 text-[14px] text-text outline-hidden placeholder:text-muted"
-              data-testid="composer-input"
-            />
-            <ThreadPrimitive.If running={false}>
-              <ComposerPrimitive.Send
-                className="rounded-lg bg-amber/90 px-3 py-1.5 text-[13px] font-semibold text-bg disabled:opacity-40"
-                data-testid="send"
+          <div className="sticky bottom-0 mx-auto mt-4 flex w-full max-w-[44rem] flex-col gap-3 bg-panel pb-4">
+            <ThreadPrimitive.ScrollToBottom asChild>
+              <button
+                type="button"
+                aria-label="Scroll to bottom"
+                className="absolute -top-12 z-10 self-center rounded-full border border-line bg-panel p-2 text-muted transition-colors hover:text-text disabled:invisible [&_svg]:size-4"
               >
-                Send
-              </ComposerPrimitive.Send>
-            </ThreadPrimitive.If>
-            <ThreadPrimitive.If running>
-              <ComposerPrimitive.Cancel
-                className="rounded-lg border border-line px-3 py-1.5 text-[13px] font-semibold text-text"
-                data-testid="stop"
-              >
-                Stop
-              </ComposerPrimitive.Cancel>
-            </ThreadPrimitive.If>
-          </ComposerPrimitive.Root>
-        </div>
+                <ArrowDownIcon />
+              </button>
+            </ThreadPrimitive.ScrollToBottom>
+            <ComposerPrimitive.Root className="flex flex-col gap-2 rounded-3xl border border-line bg-panel2 p-2.5 transition-colors focus-within:border-[#3a4451]">
+              <ComposerPrimitive.Input
+                rows={1}
+                autoFocus
+                placeholder="Send a message…"
+                aria-label="Message input"
+                enterKeyHint="send"
+                className="max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-[15px] leading-6 text-text caret-amber outline-hidden placeholder:text-muted"
+                data-testid="composer-input"
+              />
+              <div className="flex justify-end">
+                <ThreadPrimitive.If running={false}>
+                  <ComposerPrimitive.Send
+                    aria-label="Send message"
+                    className="flex size-8 items-center justify-center rounded-full bg-amber text-bg transition-opacity disabled:opacity-30"
+                    data-testid="send"
+                  >
+                    <ArrowUpIcon className="size-4" />
+                  </ComposerPrimitive.Send>
+                </ThreadPrimitive.If>
+                <ThreadPrimitive.If running>
+                  <ComposerPrimitive.Cancel
+                    aria-label="Stop generating"
+                    className="flex size-8 items-center justify-center rounded-full bg-text text-bg"
+                    data-testid="stop"
+                  >
+                    <SquareIcon className="size-3.5 fill-current" />
+                  </ComposerPrimitive.Cancel>
+                </ThreadPrimitive.If>
+              </div>
+            </ComposerPrimitive.Root>
+          </div>
+        </ThreadPrimitive.Viewport>
       </ThreadPrimitive.Root>
     </AssistantRuntimeProvider>
   );

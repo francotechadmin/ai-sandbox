@@ -1,57 +1,59 @@
 "use client";
 
 import { useState } from "react";
-import type { ReasoningMessagePartComponent, TextMessagePartComponent, ToolCallMessagePartComponent } from "@assistant-ui/react";
+import type { ReasoningMessagePartComponent, ToolCallMessagePartComponent } from "@assistant-ui/react";
+import { BrainIcon, CheckIcon, ChevronDownIcon, LoaderIcon, WrenchIcon, XIcon } from "lucide-react";
 
-export const TextPart: TextMessagePartComponent = ({ text }) => (
-  <p className="whitespace-pre-wrap text-[14px] leading-relaxed">{text}</p>
-);
-
-// Open while the model is thinking, collapses once it moves on.
+// Open while the model is thinking, collapses once it moves on, until the user
+// toggles it by hand.
 export const ReasoningPart: ReasoningMessagePartComponent = ({ text, status }) => {
   const running = status.type === "running";
-  // Follows `running` (open while thinking, collapsed after) until the user
-  // toggles it by hand.
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
   const open = userOpen ?? running;
   return (
-    <details
-      open={open}
-      onToggle={(e) => {
-        const el = e.currentTarget as HTMLDetailsElement;
-        if (el.open !== open) setUserOpen(el.open);
-      }}
-      className="rounded-lg border border-line bg-panel2/60 px-3 py-2 text-[12px] text-muted"
-      data-testid="reasoning"
-    >
-      <summary className="cursor-pointer select-none font-medium uppercase tracking-wide text-[11px]">
-        {running ? "Thinking…" : "Reasoning"}
-      </summary>
-      <p className="mt-1.5 whitespace-pre-wrap leading-relaxed">{text}</p>
-    </details>
+    <div className="my-2 rounded-xl border border-line bg-panel/60 text-[13px]" data-testid="reasoning">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setUserOpen(!open)}
+        className="flex w-full items-center gap-2 px-3 py-2 text-muted transition-colors hover:text-text"
+      >
+        <BrainIcon className={`size-3.5 ${running ? "animate-pulse text-amber" : ""}`} />
+        <span className={running ? "shimmer font-medium" : "font-medium"}>{running ? "Thinking…" : "Reasoning"}</span>
+        <ChevronDownIcon className={`ms-auto size-3.5 transition-transform ${open ? "" : "-rotate-90"}`} />
+      </button>
+      {open && (
+        <p className="whitespace-pre-wrap border-t border-line px-3 py-2.5 leading-relaxed text-muted">{text}</p>
+      )}
+    </div>
   );
 };
-
-const TOOL_DOT = {
-  running: "bg-amber animate-pulse",
-  complete: "bg-green",
-  error: "bg-red",
-} as const;
 
 export const ToolCallPart: ToolCallMessagePartComponent = ({ toolName, args, result, isError }) => {
   const state = isError ? "error" : result === undefined ? "running" : "complete";
   return (
-    <div className="rounded-lg border border-line bg-panel2/60 px-3 py-2 text-[12px]" data-testid="tool-call">
-      <div className="flex items-center gap-2">
-        <span className={`h-2 w-2 rounded-full ${TOOL_DOT[state]}`} />
+    <div className="my-2 overflow-hidden rounded-xl border border-line bg-panel/60 text-[13px]" data-testid="tool-call">
+      <div className="flex items-center gap-2 px-3 py-2">
+        <WrenchIcon className="size-3.5 text-muted" />
         <span className="font-mono text-[12px] text-[#7db3d8]">{toolName}</span>
-        <span className="text-muted">{state === "running" ? "running…" : state === "error" ? "failed" : "done"}</span>
+        <span className="ms-auto flex items-center gap-1.5 text-muted">
+          {state === "running" && <LoaderIcon className="size-3.5 animate-spin text-amber" />}
+          {state === "complete" && <CheckIcon className="size-3.5 text-green" />}
+          {state === "error" && <XIcon className="size-3.5 text-red" />}
+          {state === "running" ? "Running" : state === "error" ? "Failed" : "Done"}
+        </span>
       </div>
-      <pre className="mt-1.5 overflow-x-auto font-mono text-[11px] text-muted">{JSON.stringify(args)}</pre>
+      <div className="border-t border-line px-3 py-2">
+        <div className="mb-1 text-[11px] uppercase tracking-wide text-muted">Input</div>
+        <pre className="overflow-x-auto font-mono text-[12px] text-muted">{JSON.stringify(args)}</pre>
+      </div>
       {result !== undefined && (
-        <pre className="mt-1 overflow-x-auto whitespace-pre-wrap font-mono text-[11px] text-text" data-testid="tool-result">
-          {typeof result === "string" ? result : JSON.stringify(result)}
-        </pre>
+        <div className="border-t border-line px-3 py-2">
+          <div className="mb-1 text-[11px] uppercase tracking-wide text-muted">Result</div>
+          <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-[12px] text-text" data-testid="tool-result">
+            {typeof result === "string" ? result : JSON.stringify(result)}
+          </pre>
+        </div>
       )}
     </div>
   );

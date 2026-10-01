@@ -23,6 +23,25 @@ from .history import message_text
 _EXPR = re.compile(r"[-+*/().\d\s]*\d[-+*/().\d\s]*[-+*/][-+*/().\d\s]*\d[-+*/().\d\s]*")
 
 
+_MARKDOWN_SAMPLE = """## Markdown check
+
+Here is **bold**, *italic*, `inline code` and a [link](https://example.com).
+
+- First item
+- Second item
+
+```python
+def add(a, b):
+    return a + b
+```
+
+| Model | Provider |
+|-------|----------|
+| Haiku | Anthropic |
+| GPT-5 mini | OpenAI |
+"""
+
+
 class ScriptedChatModel(BaseChatModel):
     reasoning: bool = False
     tool_names: list[str] = []
@@ -97,5 +116,7 @@ class ScriptedChatModel(BaseChatModel):
             if tool_msg is not None
             else f"You said: {human}"
         )
+        if tool_msg is None and "markdown" in human.lower():
+            answer = _MARKDOWN_SAMPLE
         for word in re.findall(r"\S+\s*", answer):
             yield chunk(content=[{"type": "text", "text": word, "index": index}])
