@@ -76,3 +76,16 @@ ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 MODEL_NAME=claude-sonnet-5      # optional override
 ```
+
+## Tooling notes
+
+Dependencies are on their latest majors (Next 16, React 19, Tailwind 4,
+TypeScript 7). Two deliberate exceptions to "newest wins":
+
+- **TypeScript** runs side by side: `tsc` is TypeScript 7 (`@typescript/native`),
+  while the `typescript` package is the 6.0 compatibility build
+  (`@typescript/typescript6`) because typescript-eslint and Next's type check
+  still need the old JS API.
+- **ESLint 9, not 10** — the latest `eslint-plugin-react` (pulled in by
+  `eslint-config-next`) doesn't support ESLint 10 yet. Revisit when it does.
+

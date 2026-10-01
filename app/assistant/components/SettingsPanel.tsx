@@ -33,7 +33,7 @@ export function SettingsPanel({
           id="model"
           value={settings.model}
           onChange={(e) => onChange({ ...settings, model: e.target.value })}
-          className="rounded-lg border border-line bg-panel2 px-2.5 py-1.5 text-[13px] outline-none"
+          className="rounded-lg border border-line bg-panel2 px-2.5 py-1.5 text-[13px] outline-hidden"
         >
           {config.models.map((m) => (
             <option key={m.id} value={m.id} disabled={!m.available}>
@@ -58,7 +58,7 @@ export function SettingsPanel({
           checked={settings.reasoning && reasoningSupported}
           disabled={!reasoningSupported}
           onChange={(e) => onChange({ ...settings, reasoning: e.target.checked })}
-          className="h-4 w-4 accent-[#e2a545]"
+          className="h-4 w-4 accent-amber"
         />
       </label>
 
@@ -77,7 +77,7 @@ export function SettingsPanel({
                     : settings.tools.filter((n) => n !== t.name),
                 })
               }
-              className="mt-0.5 h-4 w-4 accent-[#e2a545]"
+              className="mt-0.5 h-4 w-4 accent-amber"
             />
             <span>
               <span className="font-mono text-[12px]">{t.name}</span>
@@ -102,7 +102,7 @@ export function SettingsPanel({
           value={settings.systemPrompt}
           onChange={(e) => onChange({ ...settings, systemPrompt: e.target.value })}
           placeholder="No system prompt — the model gets only your messages."
-          className="min-h-[140px] flex-1 resize-none rounded-lg border border-line bg-panel2 px-2.5 py-2 text-[13px] leading-relaxed outline-none"
+          className="min-h-[140px] flex-1 resize-none rounded-lg border border-line bg-panel2 px-2.5 py-2 text-[13px] leading-relaxed outline-hidden"
         />
         <p className="text-[11px] text-muted">Applies to your next message. Stored in this browser only.</p>
       </div>

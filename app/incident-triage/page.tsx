@@ -101,7 +101,7 @@ function TimelineEntry({
   const dot: Record<"evidence" | "model" | "policy" | "decision", string> = {
     evidence: "bg-[#7db3d8]",
     model: "bg-amber",
-    policy: "bg-[#8b95a3]",
+    policy: "bg-muted",
     decision: "bg-green",
   };
   return (
@@ -150,9 +150,9 @@ export default function IncidentTriagePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-bg/95 px-6 py-3 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-bg/95 px-6 py-3 backdrop-blur-xs">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-amber/90 text-xs font-bold text-bg">
+          <div className="flex h-6 w-6 items-center justify-center rounded-sm bg-amber/90 text-xs font-bold text-bg">
             A
           </div>
           <span className="text-sm font-semibold">Atlas Ops Console</span>

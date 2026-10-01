@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ReasoningMessagePartComponent, TextMessagePartComponent, ToolCallMessagePartComponent } from "@assistant-ui/react";
 
 export const TextPart: TextMessagePartComponent = ({ text }) => (
@@ -10,14 +10,17 @@ export const TextPart: TextMessagePartComponent = ({ text }) => (
 // Open while the model is thinking, collapses once it moves on.
 export const ReasoningPart: ReasoningMessagePartComponent = ({ text, status }) => {
   const running = status.type === "running";
-  const [open, setOpen] = useState(running);
-  useEffect(() => {
-    setOpen(running);
-  }, [running]);
+  // Follows `running` (open while thinking, collapsed after) until the user
+  // toggles it by hand.
+  const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  const open = userOpen ?? running;
   return (
     <details
       open={open}
-      onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
+      onToggle={(e) => {
+        const el = e.currentTarget as HTMLDetailsElement;
+        if (el.open !== open) setUserOpen(el.open);
+      }}
       className="rounded-lg border border-line bg-panel2/60 px-3 py-2 text-[12px] text-muted"
       data-testid="reasoning"
     >

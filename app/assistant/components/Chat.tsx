@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   AssistantRuntimeProvider,
   ComposerPrimitive,
@@ -65,7 +65,9 @@ function AssistantMessage() {
 export function Chat({ settings }: { settings: Settings }) {
   // The runtime is created once; the latest settings are read per request.
   const settingsRef = useRef(settings);
-  settingsRef.current = settings;
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   const runtime = useAssistantTransportRuntime<ChatState>({
     initialState: EMPTY,
@@ -127,7 +129,7 @@ export function Chat({ settings }: { settings: Settings }) {
               rows={1}
               autoFocus
               placeholder="Message the assistant…"
-              className="max-h-40 flex-1 resize-none bg-transparent py-1 text-[14px] text-text outline-none placeholder:text-muted"
+              className="max-h-40 flex-1 resize-none bg-transparent py-1 text-[14px] text-text outline-hidden placeholder:text-muted"
               data-testid="composer-input"
             />
             <ThreadPrimitive.If running={false}>
