@@ -1,49 +1,112 @@
 # Model registry for the assistant. The list of models lives in
-# config/models.json, not in code — add or change a model by editing that
-# file. Reasoning is on by default for models that support it, and how it is
-# switched on is decided here, per model, from the registry entry:
+# config/models.json, not in code: add or change a model by editing that file
+# (it is validated against the schemas below).
+#
+# Reasoning is always on for a model that has a `reasoning` entry. How it is
+# switched on differs per provider, so each provider turns the entry into its
+# own constructor arguments:
 #   anthropic "budget"   extended thinking with a token budget (Haiku 4.5)
 #   anthropic "adaptive" adaptive thinking + effort (Sonnet 5 and newer, which
 #                        reject budget_tokens)
 #   openai               Responses API reasoning effort + summaries
 
-import json
 import os
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
+
+from langchain_anthropic import ChatAnthropic
+from langchain_core.language_models import BaseChatModel
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 
 CONFIG_DIR = Path(__file__).parent / "config"
-
-API_KEY_ENV = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
-
-# Test/demo-only provider: set ASSISTANT_FAKE_MODEL=1 to expose a scripted
-# model that needs no API key (used for end-to-end UI tests).
-FAKE_MODEL_ID = "demo-fake"
 
 
 class ModelConfigError(RuntimeError):
     """The requested model can't be used (unknown id, missing API key)."""
 
 
-@dataclass(frozen=True)
-class ModelSpec:
+class _Config(BaseModel):
+    """Base for models.json entries: camelCase keys, unknown keys are errors."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="forbid", frozen=True)
+
+
+class Reasoning(_Config):
+    style: Literal["budget", "adaptive"] = "budget"  # Anthropic only
+    budget_tokens: int = 4000  # "budget" style
+    effort: str = "medium"  # "adaptive" style and OpenAI
+    max_tokens: int | None = None
+
+
+class ModelSpec(_Config):
     id: str
     label: str
     provider: str
     model: str
-    reasoning: dict[str, Any] = field(default_factory=dict)
+    reasoning: Reasoning | None = None
     max_tokens: int | None = None
 
-    @property
-    def supports_reasoning(self) -> bool:
-        return bool(self.reasoning.get("supported"))
+
+class _Models(_Config):
+    default_model: str
+    models: list[ModelSpec]
+
+
+@dataclass(frozen=True)
+class Provider:
+    chat_model: Callable[..., BaseChatModel]
+    params: Callable[[ModelSpec], dict[str, Any]]
+    api_key_env: str | None = None
+
+
+def _anthropic_params(spec: ModelSpec) -> dict[str, Any]:
+    params: dict[str, Any] = {"model": spec.model}
+    reasoning = spec.reasoning
+    max_tokens = (reasoning and reasoning.max_tokens) or spec.max_tokens
+    if reasoning and reasoning.style == "adaptive":
+        # "summarized" is needed to receive the reasoning text at all.
+        params["thinking"] = {"type": "adaptive", "display": "summarized"}
+        params["output_config"] = {"effort": reasoning.effort}
+    elif reasoning:
+        # Extended thinking needs the default temperature and max_tokens > budget.
+        params["thinking"] = {"type": "enabled", "budget_tokens": reasoning.budget_tokens}
+        max_tokens = max_tokens or reasoning.budget_tokens + 4096
+    if max_tokens:
+        params["max_tokens"] = max_tokens
+    return params
+
+
+def _openai_params(spec: ModelSpec) -> dict[str, Any]:
+    params: dict[str, Any] = {"model": spec.model}
+    if spec.reasoning:
+        # The Responses API is what exposes streamed reasoning summaries.
+        params["use_responses_api"] = True
+        params["reasoning"] = {"effort": spec.reasoning.effort, "summary": "auto"}
+    return params
+
+
+PROVIDERS: dict[str, Provider] = {
+    "anthropic": Provider(ChatAnthropic, _anthropic_params, "ANTHROPIC_API_KEY"),
+    "openai": Provider(ChatOpenAI, _openai_params, "OPENAI_API_KEY"),
+}
+
+_extra_models: list[ModelSpec] = []
+
+
+def register_model(spec: ModelSpec, provider: Provider) -> None:
+    """Add a model that isn't in models.json (used by tests for a scripted model)."""
+    PROVIDERS[spec.provider] = provider
+    _extra_models.append(spec)
 
 
 @lru_cache(maxsize=1)
-def _load_raw() -> dict[str, Any]:
-    return json.loads((CONFIG_DIR / "models.json").read_text())
+def _load() -> _Models:
+    return _Models.model_validate_json((CONFIG_DIR / "models.json").read_text())
 
 
 def default_system_prompt() -> str:
@@ -52,36 +115,12 @@ def default_system_prompt() -> str:
 
 
 def list_models() -> list[ModelSpec]:
-    specs = [
-        ModelSpec(
-            id=m["id"],
-            label=m.get("label", m["id"]),
-            provider=m["provider"],
-            model=m["model"],
-            reasoning=m.get("reasoning", {}),
-            max_tokens=m.get("maxTokens"),
-        )
-        for m in _load_raw()["models"]
-    ]
-    if os.environ.get("ASSISTANT_FAKE_MODEL") == "1":
-        specs.append(
-            ModelSpec(
-                id=FAKE_MODEL_ID,
-                label="Demo (scripted, no API key)",
-                provider="fake",
-                model="fake",
-                reasoning={"supported": True},
-            )
-        )
-    return specs
+    return [*_load().models, *_extra_models]
 
 
 def default_model_id() -> str:
-    configured = _load_raw().get("defaultModel")
     ids = [m.id for m in list_models()]
-    if configured in ids:
-        return configured
-    return ids[0]
+    return _load().default_model if _load().default_model in ids else ids[0]
 
 
 def get_spec(model_id: str | None) -> ModelSpec:
@@ -93,86 +132,14 @@ def get_spec(model_id: str | None) -> ModelSpec:
 
 
 def is_available(spec: ModelSpec) -> bool:
-    if spec.provider == "fake":
-        return True
-    env = API_KEY_ENV.get(spec.provider)
-    return bool(env and os.environ.get(env))
+    provider = PROVIDERS.get(spec.provider)
+    return provider is not None and (provider.api_key_env is None or bool(os.environ.get(provider.api_key_env)))
 
 
-def model_params(spec: ModelSpec, reasoning: bool) -> dict[str, Any]:
-    """Provider-specific constructor kwargs for the requested reasoning mode.
-
-    Pure function (no network, no API key) so the toggle logic is unit-testable.
-    Reasoning is only switched on when the model's registry entry supports it.
-    """
-    on = reasoning and spec.supports_reasoning
-    cfg = spec.reasoning
-
-    if spec.provider == "anthropic":
-        style = cfg.get("style", "budget")
-        if style == "adaptive":
-            # Newer models: no budget_tokens. Thinking is adaptive and effort
-            # sets how much of it to use. "summarized" is needed to receive
-            # the reasoning text at all (the default omits it).
-            # Some of these models can't turn thinking off (the API rejects
-            # {"type": "disabled"}), so "off" just omits the setting and the
-            # reasoning text isn't shown.
-            params = {"model": spec.model}
-            if on:
-                params["thinking"] = {"type": "adaptive", "display": "summarized"}
-                params["output_config"] = {"effort": cfg.get("effort", "medium")}
-            max_tokens = cfg.get("maxTokens") if on else spec.max_tokens
-            if max_tokens:
-                params["max_tokens"] = int(max_tokens)
-            return params
-        if style != "budget":
-            raise ModelConfigError(f"{spec.label}: unknown Anthropic reasoning style '{style}'.")
-        # Extended thinking requires temperature to be left at its default and
-        # max_tokens > budget_tokens, so neither is set in the "on" case.
-        if on:
-            budget = int(cfg.get("budgetTokens", 4000))
-            return {
-                "model": spec.model,
-                "thinking": {"type": "enabled", "budget_tokens": budget},
-                "max_tokens": int(cfg.get("maxTokens", budget + 4096)),
-            }
-        params = {"model": spec.model}
-        if spec.max_tokens:
-            params["max_tokens"] = spec.max_tokens
-        return params
-
-    if spec.provider == "openai":
-        # The Responses API is what exposes streamed reasoning summaries.
-        if on:
-            effort = cfg.get("effortOn", "medium")
-            reasoning_cfg: dict[str, Any] = {"effort": effort, "summary": "auto"}
-        else:
-            reasoning_cfg = {"effort": cfg.get("effortOff", "minimal")}
-        return {"model": spec.model, "use_responses_api": True, "reasoning": reasoning_cfg}
-
-    if spec.provider == "fake":
-        return {"reasoning": on}
-
-    raise ModelConfigError(f"Unsupported provider '{spec.provider}'.")
-
-
-def build_model(spec: ModelSpec, reasoning: bool):
+def build_model(spec: ModelSpec) -> BaseChatModel:
+    provider = PROVIDERS.get(spec.provider)
+    if provider is None:
+        raise ModelConfigError(f"Unsupported provider '{spec.provider}'.")
     if not is_available(spec):
-        env = API_KEY_ENV.get(spec.provider, "an API key")
-        raise ModelConfigError(f"{spec.label} is unavailable: {env} is not set on the server.")
-
-    params = model_params(spec, reasoning)
-
-    if spec.provider == "anthropic":
-        from langchain_anthropic import ChatAnthropic
-
-        return ChatAnthropic(**params)
-    if spec.provider == "openai":
-        from langchain_openai import ChatOpenAI
-
-        return ChatOpenAI(**params)
-    if spec.provider == "fake":
-        from .fake_model import ScriptedChatModel
-
-        return ScriptedChatModel(**params)
-    raise ModelConfigError(f"Unsupported provider '{spec.provider}'.")
+        raise ModelConfigError(f"{spec.label} is unavailable: {provider.api_key_env} is not set on the server.")
+    return provider.chat_model(**provider.params(spec))

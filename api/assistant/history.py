@@ -18,20 +18,6 @@ from typing import Any
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
 
 
-def message_text(content: Any) -> str:
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        out = []
-        for block in content:
-            if isinstance(block, str):
-                out.append(block)
-            elif isinstance(block, dict) and block.get("type") == "text":
-                out.append(block.get("text", ""))
-        return "".join(out)
-    return str(content)
-
-
 def state_to_messages(state: dict[str, Any]) -> list[BaseMessage]:
     messages: list[BaseMessage] = []
     for m in state.get("messages", []):
@@ -55,8 +41,7 @@ def state_to_messages(state: dict[str, Any]) -> list[BaseMessage]:
                 AIMessage(
                     content=text,
                     tool_calls=[
-                        {"id": c["toolCallId"], "name": c["toolName"], "args": c.get("args") or {}}
-                        for c in calls
+                        {"id": c["toolCallId"], "name": c["toolName"], "args": c.get("args") or {}} for c in calls
                     ],
                 )
             )

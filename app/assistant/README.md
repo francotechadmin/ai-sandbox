@@ -12,8 +12,8 @@ rendered as it happens.
   (`create_agent`) and streams its output to the browser; `GET /config`
   tells the UI which models and tools exist.
 - **Models are config, not code** — `api/assistant/config/models.json` lists
-  them (currently Claude Haiku 4.5 and GPT-5 mini). Add a model by adding an
-  entry. A model with no API key on the server shows as disabled in the UI.
+  them (Claude Haiku 4.5 and Sonnet 5.5, GPT-5 mini and GPT-5). The file is validated
+  on load, so a typo fails loudly. Add a model by adding an entry. A model with no API key on the server shows as disabled in the UI.
 - **Reasoning is on by default, handled by the backend** — no UI toggle.
   `api/assistant/registry.py` turns it on per model, using each model's own
   mechanism, chosen by `reasoning.style` in `models.json`: `budget` (Anthropic
@@ -33,7 +33,8 @@ rendered as it happens.
   sent back each turn (assistant-ui's "Assistant Transport"), so nothing is
   stored server-side and it fits a serverless function.
 - **UI** — [assistant-ui](https://www.assistant-ui.com) primitives, styled
-  with the sandbox's Tailwind theme.
+  with the sandbox's Tailwind theme; replies are rendered as markdown
+  (Tailwind Typography).
 
 ## Tools
 
@@ -53,16 +54,19 @@ ANTHROPIC_API_KEY=... OPENAI_API_KEY=... uvicorn api.index:app --reload --port 8
 npm run dev   # http://localhost:3000/assistant
 ```
 
-No API keys? `ASSISTANT_FAKE_MODEL=1` adds a scripted "Demo" model that
-streams reasoning, calls the calculator when asked to "calc 2+2", and echoes
-the system prompt it received. It's what the tests use.
+No API keys? `api/tests/serve_fake.py` is the same API plus a scripted "Demo"
+model that streams reasoning, calls the calculator when asked to "calc 2+2",
+renders markdown when asked for "markdown", and echoes the system prompt it
+received. It lives with the tests and is what they (and the browser tests) use:
 
 ```bash
-python -m pytest api/tests
+uvicorn api.tests.serve_fake:app --port 8000   # UI without API keys
+python -m pytest api/tests                     # backend tests
+npm run test:e2e                               # browser tests
 ```
 
 ## Not built yet
 
-Markdown rendering of replies, RAG, MCP tools, human approval gates, skills,
+RAG, MCP tools, human approval gates, skills,
 evals, thread history. Nothing is persisted between page loads except the
 settings.

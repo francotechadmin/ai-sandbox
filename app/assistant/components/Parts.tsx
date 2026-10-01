@@ -35,7 +35,7 @@ export const ToolCallPart: ToolCallMessagePartComponent = ({ toolName, args, res
     <div className="my-2 overflow-hidden rounded-xl border border-line bg-panel/60 text-[13px]" data-testid="tool-call">
       <div className="flex items-center gap-2 px-3 py-2">
         <WrenchIcon className="size-3.5 text-muted" />
-        <span className="font-mono text-[12px] text-[#7db3d8]">{toolName}</span>
+        <span className="font-mono text-[12px] text-tool">{toolName}</span>
         <span className="ms-auto flex items-center gap-1.5 text-muted">
           {state === "running" && <LoaderIcon className="size-3.5 animate-spin text-amber" />}
           {state === "complete" && <CheckIcon className="size-3.5 text-green" />}

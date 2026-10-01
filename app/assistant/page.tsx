@@ -52,7 +52,7 @@ export default function AssistantPage() {
       </header>
 
       {loadError ? (
-        <div className="m-6 rounded-lg border border-[#4a2a26] bg-[#301c1a] px-4 py-3 text-sm text-red" data-testid="load-error">
+        <div className="m-6 rounded-lg border border-danger-line bg-danger-bg px-4 py-3 text-sm text-red" data-testid="load-error">
           {loadError}
         </div>
       ) : !config || !settings ? (

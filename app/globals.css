@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
 
 @theme {
   --color-bg: #06070c;
@@ -10,6 +11,9 @@
   --color-amber: #e2a545;
   --color-green: #4fae76;
   --color-red: #d3654f;
+  --color-danger-bg: #301c1a;
+  --color-danger-line: #4a2a26;
+  --color-tool: #7db3d8;
 
   /* Landing page */
   --color-void: #06070c;
@@ -52,17 +56,6 @@
   }
 }
 
-@keyframes fadein {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* "Thinking…" label while the model reasons. */
 .shimmer {
   background: linear-gradient(90deg, var(--color-muted) 30%, var(--color-text) 50%, var(--color-muted) 70%);
@@ -92,4 +85,25 @@
 @media (prefers-reduced-motion: reduce) {
   .rise { opacity: 1; animation: none; }
   .caret { animation: none; }
+}
+
+/* Assistant replies: Tailwind Typography, mapped to the sandbox tokens. */
+.chat-prose {
+  font-size: 15px;
+  --tw-prose-body: var(--color-text);
+  --tw-prose-headings: var(--color-text);
+  --tw-prose-lead: var(--color-text);
+  --tw-prose-links: var(--color-amber);
+  --tw-prose-bold: var(--color-text);
+  --tw-prose-counters: var(--color-muted);
+  --tw-prose-bullets: var(--color-muted);
+  --tw-prose-hr: var(--color-line);
+  --tw-prose-quotes: var(--color-muted);
+  --tw-prose-quote-borders: var(--color-line);
+  --tw-prose-captions: var(--color-muted);
+  --tw-prose-code: var(--color-text);
+  --tw-prose-pre-code: var(--color-text);
+  --tw-prose-pre-bg: var(--color-bg);
+  --tw-prose-th-borders: var(--color-line);
+  --tw-prose-td-borders: var(--color-line);
 }

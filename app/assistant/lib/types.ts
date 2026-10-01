@@ -1,5 +1,7 @@
 // Shapes shared between the assistant backend (api/assistant) and this page.
 
+import type { ReadonlyJSONObject } from "assistant-stream/utils";
+
 export type StatePart =
   | { type: "reasoning"; step: number; text: string }
   | { type: "text"; step: number; text: string }
@@ -8,7 +10,7 @@ export type StatePart =
       step: number;
       toolCallId: string;
       toolName: string;
-      args: Record<string, unknown>;
+      args: ReadonlyJSONObject;
       status: "running" | "complete" | "error";
       result: string | null;
     };
@@ -31,7 +33,6 @@ export type ModelInfo = {
   label: string;
   provider: string;
   available: boolean;
-  supportsReasoning: boolean;
 };
 
 export type AssistantConfig = {

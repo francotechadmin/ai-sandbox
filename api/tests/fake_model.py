@@ -1,11 +1,14 @@
-# Scripted chat model for tests and for running the UI without API keys
-# (enabled by ASSISTANT_FAKE_MODEL=1). It streams chunks in the same shape the
-# real Anthropic integration produces, so the real normalisation path runs.
+# Scripted chat model for the tests and the browser (e2e) tests. It streams
+# chunks in the same shape the real Anthropic integration produces, so the real
+# normalisation path runs. `register_fake_model()` adds it to the registry as
+# "demo-fake"; nothing outside the tests does.
 
+import json
 import os
 import re
 import time
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models.chat_models import BaseChatModel, generate_from_stream
@@ -18,7 +21,7 @@ from langchain_core.messages import (
 )
 from langchain_core.outputs import ChatGenerationChunk, ChatResult
 
-from .history import message_text
+from api.assistant import registry
 
 _EXPR = re.compile(r"[-+*/().\d\s]*\d[-+*/().\d\s]*[-+*/][-+*/().\d\s]*\d[-+*/().\d\s]*")
 
@@ -43,7 +46,6 @@ def add(a, b):
 
 
 class ScriptedChatModel(BaseChatModel):
-    reasoning: bool = False
     tool_names: list[str] = []
 
     @property
@@ -64,8 +66,8 @@ class ScriptedChatModel(BaseChatModel):
         run_manager: CallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
-        system = next((message_text(m.content) for m in messages if isinstance(m, SystemMessage)), "")
-        human = next((message_text(m.content) for m in reversed(messages) if isinstance(m, HumanMessage)), "")
+        system = next((m.text for m in messages if isinstance(m, SystemMessage)), "")
+        human = next((m.text for m in reversed(messages) if isinstance(m, HumanMessage)), "")
         tool_msg = messages[-1] if messages and isinstance(messages[-1], ToolMessage) else None
         if "boom" in human.lower():
             raise RuntimeError("scripted failure")
@@ -78,17 +80,14 @@ class ScriptedChatModel(BaseChatModel):
         def chunk(**kw: Any) -> ChatGenerationChunk:
             if delay:
                 time.sleep(delay)  # lets UI tests observe incremental streaming
-            return ChatGenerationChunk(
-                message=AIMessageChunk(id=msg_id, response_metadata=meta, **kw)
-            )
+            return ChatGenerationChunk(message=AIMessageChunk(id=msg_id, response_metadata=meta, **kw))
 
-        if self.reasoning:
-            thought = "Considering the request" + (
-                " and the tool result." if tool_msg else ", checking whether a tool helps."
-            )
-            for word in re.findall(r"\S+\s*", thought):
-                yield chunk(content=[{"type": "thinking", "thinking": word, "index": index}])
-            index += 1
+        thought = "Considering the request" + (
+            " and the tool result." if tool_msg else ", checking whether a tool helps."
+        )
+        for word in re.findall(r"\S+\s*", thought):
+            yield chunk(content=[{"type": "thinking", "thinking": word, "index": index}])
+        index += 1
 
         match = _EXPR.search(human)
         if tool_msg is None and match and "calc" in human.lower() and "calculator" in self.tool_names:
@@ -96,12 +95,10 @@ class ScriptedChatModel(BaseChatModel):
                 content=[
                     {"type": "tool_use", "id": "call_scripted_1", "name": "calculator", "input": {}, "index": index}
                 ],
-                tool_call_chunks=[
-                    {"name": "calculator", "args": "", "id": "call_scripted_1", "index": index}
-                ],
+                tool_call_chunks=[{"name": "calculator", "args": "", "id": "call_scripted_1", "index": index}],
             )
             expr = match.group(0).strip()
-            args = '{"expression": "%s"}' % expr
+            args = json.dumps({"expression": expr})
             for i in range(0, len(args), 8):
                 part = args[i : i + 8]
                 yield chunk(
@@ -111,12 +108,18 @@ class ScriptedChatModel(BaseChatModel):
             return
 
         answer = f"[system: {system or 'none'}] "
-        answer += (
-            f"The tool returned {message_text(tool_msg.content)}."
-            if tool_msg is not None
-            else f"You said: {human}"
-        )
+        answer += f"The tool returned {tool_msg.text}." if tool_msg is not None else f"You said: {human}"
         if tool_msg is None and "markdown" in human.lower():
             answer = _MARKDOWN_SAMPLE
         for word in re.findall(r"\S+\s*", answer):
             yield chunk(content=[{"type": "text", "text": word, "index": index}])
+
+
+FAKE_MODEL_ID = "demo-fake"
+
+
+def register_fake_model() -> None:
+    if any(m.id == FAKE_MODEL_ID for m in registry.list_models()):
+        return
+    spec = registry.ModelSpec(id=FAKE_MODEL_ID, label="Demo (scripted, no API key)", provider="fake", model="fake")
+    registry.register_model(spec, registry.Provider(ScriptedChatModel, lambda _spec: {}))

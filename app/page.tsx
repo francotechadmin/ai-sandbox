@@ -24,7 +24,7 @@ function AssistantPreview() {
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-bone/60">
           <WrenchIcon className="size-3.5" />
-          <span className="font-mono text-[#7db3d8]">get_weather</span>
+          <span className="font-mono text-tool">get_weather</span>
           <CheckIcon className="ms-auto size-3.5 text-green" />
         </div>
         <div className="h-2 w-full rounded-full bg-white/15" />
@@ -46,7 +46,7 @@ export default function HomePage() {
           aria-hidden
         />
         <div
-          className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(6,7,12,0.82)_0%,rgba(6,7,12,0.35)_55%,rgba(6,7,12,0)_100%),linear-gradient(0deg,#06070c_0%,transparent_38%)]"
+          className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(6,7,12,0.82)_0%,rgba(6,7,12,0.35)_55%,rgba(6,7,12,0)_100%),linear-gradient(0deg,var(--color-void)_0%,transparent_38%)]"
           aria-hidden
         />
 

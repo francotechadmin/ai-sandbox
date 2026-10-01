@@ -59,8 +59,20 @@ npm run dev        # Next.js frontend, http://localhost:3000
 
 pip install -r api/requirements-dev.txt
 uvicorn api.index:app --reload --port 8000   # FastAPI backend
-python -m pytest api/tests                   # backend tests
 ```
+
+## Checks (also run in CI)
+
+```bash
+npm run lint && npm run typecheck && npm run build
+ruff check api && ruff format --check api
+python -m pytest api/tests          # backend
+npm run test:e2e                    # browser tests: real UI + API, scripted model
+```
+
+The browser tests start both servers themselves. Locally set `PYTHON` to your
+venv's python (and `CHROMIUM_PATH` to reuse an installed Chromium instead of
+`npx playwright install chromium`).
 
 (In production both are served from the same Vercel deployment; locally
 they run as two processes since Vercel's dev server isn't available here.)
@@ -68,11 +80,16 @@ they run as two processes since Vercel's dev server isn't available here.)
 ## Environment variables
 
 ```
-MODEL_PROVIDER=anthropic        # or "openai" — shared across all demos
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
-MODEL_NAME=claude-sonnet-5      # optional override
 ```
+
+A model whose key isn't set shows as disabled in the model picker.
+
+**Protect the deployment.** The chat endpoint spends these keys and has no
+login of its own. Requests are size-limited, but anyone who can reach the URL
+can chat, so keep Vercel Deployment Protection (or another gate) on for any
+deployment that holds real keys.
 
 ## Tooling notes
 

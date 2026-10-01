@@ -7,20 +7,25 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@assistant-ui/react": "^0.15.22",
     "@assistant-ui/react-markdown": "^0.14.17",
     "@fontsource-variable/geist": "^5.3.0",
+    "@tailwindcss/typography": "^0.5.20",
     "assistant-stream": "^0.3.45",
+    "clsx": "^2.1.1",
     "lucide-react": "^1.49.0",
     "next": "^16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "react-type-animation": "^3.2.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.3",
     "@types/react": "^19.3.0",

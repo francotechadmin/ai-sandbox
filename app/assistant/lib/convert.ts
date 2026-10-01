@@ -33,8 +33,9 @@ function toLike(m: StateMessage): Like {
         type: "tool-call" as const,
         toolCallId: p.toolCallId,
         toolName: p.toolName,
-        args: p.args as never,
-        argsText: JSON.stringify(p.args),
+        args: p.args,
+        // Empty until the backend has the arguments, so the text only ever grows.
+        argsText: Object.keys(p.args).length ? JSON.stringify(p.args) : "",
         // Left undefined until the tool has run so the card shows "running".
         ...(p.result === null ? {} : { result: p.result }),
         isError: p.status === "error",

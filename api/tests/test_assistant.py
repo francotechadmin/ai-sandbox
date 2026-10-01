@@ -2,18 +2,15 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
-
-from api.assistant.router import ChatRequest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from api.assistant import registry
+from api.assistant import registry, router
 from api.assistant.history import state_to_messages
 from api.index import app
 
 
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
-    monkeypatch.setenv("ASSISTANT_FAKE_MODEL", "1")
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
@@ -62,71 +59,61 @@ def run_chat(text, *, state=None, **settings):
     return final
 
 
-# -- registry / reasoning toggle ---------------------------------------------
+# -- registry ----------------------------------------------------------------
 def spec(provider):
     return next(m for m in registry.list_models() if m.provider == provider)
 
 
-def test_anthropic_reasoning_on_enables_thinking_and_leaves_temperature_alone():
-    params = registry.model_params(spec("anthropic"), reasoning=True)
-    assert params["thinking"] == {"type": "enabled", "budget_tokens": 4000}
-    assert params["max_tokens"] > params["thinking"]["budget_tokens"]
-    assert "temperature" not in params
+def params(model_spec):
+    return registry.PROVIDERS[model_spec.provider].params(model_spec)
+
+
+def test_anthropic_budget_style_enables_thinking_and_leaves_temperature_alone():
+    result = params(spec("anthropic"))
+    assert result["thinking"] == {"type": "enabled", "budget_tokens": 4000}
+    assert result["max_tokens"] > result["thinking"]["budget_tokens"]
+    assert "temperature" not in result
 
 
 def test_anthropic_adaptive_style_uses_effort_not_budget():
     adaptive = registry.ModelSpec(
-        "s", "S", "anthropic", "claude-sonnet-5-5",
-        reasoning={"supported": True, "style": "adaptive", "effort": "medium", "maxTokens": 8000},
+        id="s",
+        label="S",
+        provider="anthropic",
+        model="claude-sonnet-5-5",
+        reasoning=registry.Reasoning(style="adaptive", effort="medium", max_tokens=8000),
     )
-    on = registry.model_params(adaptive, reasoning=True)
-    assert on["thinking"] == {"type": "adaptive", "display": "summarized"}
-    assert on["output_config"] == {"effort": "medium"} and on["max_tokens"] == 8000
-    assert "budget_tokens" not in str(on)
-    # Can't be disabled on these models; "off" just omits it.
-    assert "thinking" not in registry.model_params(adaptive, reasoning=False)
+    result = params(adaptive)
+    assert result["thinking"] == {"type": "adaptive", "display": "summarized"}
+    assert result["output_config"] == {"effort": "medium"} and result["max_tokens"] == 8000
+    assert "budget_tokens" not in str(result)
 
 
-def test_every_configured_anthropic_model_builds_a_valid_request(monkeypatch):
+def test_openai_reasoning_uses_responses_api_and_summaries():
+    result = params(spec("openai"))
+    assert result["use_responses_api"] and result["reasoning"] == {"effort": "medium", "summary": "auto"}
+
+
+def test_models_without_a_reasoning_entry_get_no_reasoning_settings():
+    plain = registry.ModelSpec(id="m", label="M", provider="anthropic", model="x", max_tokens=100)
+    assert params(plain) == {"model": "x", "max_tokens": 100}
+    assert params(plain.model_copy(update={"provider": "openai"})) == {"model": "x"}
+
+
+def test_models_json_is_validated():
+    with pytest.raises(ValueError):
+        registry.ModelSpec.model_validate({"id": "x", "label": "X", "provider": "openai", "model": "m", "typo": 1})
+
+
+def test_every_configured_model_builds_a_valid_request(monkeypatch):
     # Catches provider-side parameter rules (e.g. budget_tokens rejected on
     # newer models) without a network call.
-    from langchain_core.messages import HumanMessage
-
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
-    for s in registry.list_models():
-        if s.provider != "anthropic":
-            continue
-        for reasoning in (True, False):
-            model = registry.build_model(s, reasoning)
-            model._get_request_payload([HumanMessage(content="hi")])
-
-
-def test_reasoning_defaults_on_in_the_api():
-    assert ChatRequest.model_fields["settings"].default_factory().reasoning is True
-
-
-def test_anthropic_reasoning_off_has_no_thinking():
-    assert "thinking" not in registry.model_params(spec("anthropic"), reasoning=False)
-
-
-def test_openai_reasoning_toggle_uses_responses_api_and_summaries():
-    on = registry.model_params(spec("openai"), reasoning=True)
-    off = registry.model_params(spec("openai"), reasoning=False)
-    assert on["use_responses_api"] and on["reasoning"] == {"effort": "medium", "summary": "auto"}
-    assert off["reasoning"] == {"effort": "minimal"}
-
-
-def test_reasoning_ignored_when_model_does_not_support_it():
-    unsupported = registry.ModelSpec("m", "M", "anthropic", "x", reasoning={"supported": False})
-    assert "thinking" not in registry.model_params(unsupported, reasoning=True)
-
-
-def test_real_models_construct_with_params(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
     monkeypatch.setenv("OPENAI_API_KEY", "test")
-    for provider in ("anthropic", "openai"):
-        for reasoning in (True, False):
-            assert registry.build_model(spec(provider), reasoning) is not None
+    for s in registry.list_models():
+        model = registry.build_model(s)
+        if s.provider == "anthropic":
+            model._get_request_payload([HumanMessage(content="hi")])
 
 
 # -- config endpoint ---------------------------------------------------------
@@ -147,15 +134,13 @@ def test_system_prompt_comes_from_the_request_and_nothing_is_injected():
     assert "[system: none]" in without["messages"][-1]["parts"][-1]["text"]
 
 
-def test_reasoning_toggle_controls_reasoning_parts():
-    on = run_chat("hi", reasoning=True)["messages"][-1]["parts"]
-    off = run_chat("hi", reasoning=False)["messages"][-1]["parts"]
-    assert [p["type"] for p in on] == ["reasoning", "text"]
-    assert [p["type"] for p in off] == ["text"]
+def test_reasoning_is_streamed_before_the_answer():
+    parts = run_chat("hi")["messages"][-1]["parts"]
+    assert [p["type"] for p in parts] == ["reasoning", "text"]
 
 
 def test_tool_call_is_streamed_and_resolved():
-    state = run_chat("please calc 12*(3+4)", reasoning=True, tools=["calculator"])
+    state = run_chat("please calc 12*(3+4)", tools=["calculator"])
     user, assistant = state["messages"]
     assert user["role"] == "user" and assistant["status"] == "complete"
     types = [p["type"] for p in assistant["parts"]]
@@ -184,30 +169,40 @@ def test_second_turn_continues_the_conversation():
 
 
 def test_model_failure_is_reported_on_the_message_not_swallowed():
-    state = run_chat("boom")
-    assistant = state["messages"][-1]
+    assistant = run_chat("boom")["messages"][-1]
     assert assistant["status"] == "error"
     assert "scripted failure" in assistant["error"]
 
 
 @pytest.mark.parametrize(
-    "settings,text,fragment",
+    "model,fragment",
+    [("nope", "Unknown model"), ("claude-haiku-4-5", "ANTHROPIC_API_KEY")],
+)
+def test_unusable_models_are_reported_on_the_message(model, fragment):
+    assistant = run_chat("hi", model=model)["messages"][-1]
+    assert assistant["status"] == "error" and fragment in assistant["error"]
+
+
+def post_chat(text="hi", **body):
+    command = {"type": "add-message", "message": {"role": "user", "parts": [{"type": "text", "text": text}]}}
+    return client.post("/api/assistant/chat", json={"commands": [command], "settings": {"model": "demo-fake"}, **body})
+
+
+def test_request_without_a_user_message_is_rejected():
+    resp = post_chat("   ")
+    assert resp.status_code == 400 and "No user message" in resp.json()["detail"]
+
+
+@pytest.mark.parametrize(
+    "body",
     [
-        ({"model": "nope"}, "hi", "Unknown model"),
-        ({"model": "claude-haiku-4-5"}, "hi", "ANTHROPIC_API_KEY"),
-        ({"model": "demo-fake"}, "   ", "No user message"),
+        {"settings": {"model": "demo-fake", "systemPrompt": "x" * (router.MAX_PROMPT_CHARS + 1)}},
+        {"settings": {"model": "demo-fake", "tools": ["calculator"] * (router.MAX_TOOLS + 1)}},
+        {"state": {"messages": [{}] * (router.MAX_STATE_MESSAGES + 1)}},
     ],
 )
-def test_bad_requests_get_clear_400s(settings, text, fragment):
-    body = {
-        "state": {"messages": []},
-        "commands": [
-            {"type": "add-message", "message": {"role": "user", "parts": [{"type": "text", "text": text}]}}
-        ],
-        "settings": settings,
-    }
-    resp = client.post("/api/assistant/chat", json=body)
-    assert resp.status_code == 400 and fragment in resp.json()["detail"]
+def test_oversized_requests_are_rejected(body):
+    assert post_chat(**body).status_code == 422
 
 
 # -- history -----------------------------------------------------------------
@@ -221,8 +216,15 @@ def test_state_to_messages_replays_tool_loops_and_drops_reasoning():
                 "status": "complete",
                 "parts": [
                     {"type": "reasoning", "step": 0, "text": "hmm"},
-                    {"type": "tool-call", "step": 0, "toolCallId": "c1", "toolName": "calculator",
-                     "args": {"expression": "1+1"}, "status": "complete", "result": "2"},
+                    {
+                        "type": "tool-call",
+                        "step": 0,
+                        "toolCallId": "c1",
+                        "toolName": "calculator",
+                        "args": {"expression": "1+1"},
+                        "status": "complete",
+                        "result": "2",
+                    },
                     {"type": "text", "step": 1, "text": "It is 2."},
                 ],
             },
@@ -236,9 +238,24 @@ def test_state_to_messages_replays_tool_loops_and_drops_reasoning():
 
 
 def test_interrupted_tool_call_still_gets_a_tool_message():
-    state = {"messages": [{"id": "2", "role": "assistant", "parts": [
-        {"type": "tool-call", "step": 0, "toolCallId": "c1", "toolName": "calculator", "args": {}, "result": None}
-    ]}]}
+    state = {
+        "messages": [
+            {
+                "id": "2",
+                "role": "assistant",
+                "parts": [
+                    {
+                        "type": "tool-call",
+                        "step": 0,
+                        "toolCallId": "c1",
+                        "toolName": "calculator",
+                        "args": {},
+                        "result": None,
+                    }
+                ],
+            }
+        ]
+    }
     msgs = state_to_messages(state)
     assert isinstance(msgs[-1], ToolMessage) and "did not complete" in msgs[-1].content
 
@@ -251,6 +268,7 @@ def test_calculator_is_safe_and_correct():
     assert calculator.invoke({"expression": "1/0"}).startswith("Error")
     assert calculator.invoke({"expression": "__import__('os').system('echo hi')"}).startswith("Error")
     assert calculator.invoke({"expression": "9**9**9"}).startswith("Error")
+    assert calculator.invoke({"expression": "'a' * 3"}).startswith("Error")
 
 
 def test_weather_formats_forecast_and_picks_place_by_hint(monkeypatch):
@@ -261,14 +279,37 @@ def test_weather_formats_forecast_and_picks_place_by_hint(monkeypatch):
     def fake_get_json(url, params):
         seen.append((url, params))
         if url == tools._GEOCODE_URL:
-            return {"results": [
-                {"name": "Houston", "admin1": "Mississippi", "country": "United States", "latitude": 1.0, "longitude": 1.0},
-                {"name": "Houston", "admin1": "Texas", "country": "United States", "latitude": 29.76, "longitude": -95.37},
-            ]}
+            return {
+                "results": [
+                    {
+                        "name": "Houston",
+                        "admin1": "Mississippi",
+                        "country": "United States",
+                        "latitude": 1.0,
+                        "longitude": 1.0,
+                    },
+                    {
+                        "name": "Houston",
+                        "admin1": "Texas",
+                        "country": "United States",
+                        "latitude": 29.76,
+                        "longitude": -95.37,
+                    },
+                ]
+            }
         return {
-            "current": {"temperature_2m": 88.1, "apparent_temperature": 95.0, "relative_humidity_2m": 70,
-                        "wind_speed_10m": 9.3, "weather_code": 2},
-            "daily": {"temperature_2m_max": [91.0], "temperature_2m_min": [76.5], "precipitation_probability_max": [20]},
+            "current": {
+                "temperature_2m": 88.1,
+                "apparent_temperature": 95.0,
+                "relative_humidity_2m": 70,
+                "wind_speed_10m": 9.3,
+                "weather_code": 2,
+            },
+            "daily": {
+                "temperature_2m_max": [91.0],
+                "temperature_2m_min": [76.5],
+                "precipitation_probability_max": [20],
+            },
         }
 
     monkeypatch.setattr(tools, "_get_json", fake_get_json)
