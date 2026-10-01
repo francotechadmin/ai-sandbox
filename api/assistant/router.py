@@ -123,4 +123,9 @@ async def chat(req: ChatRequest):
             writer.finish()
             controller.state["messages"][assistant_index]["status"] = status
 
-    return DataStreamResponse(create_run(run, state=state))
+    response = DataStreamResponse(create_run(run, state=state))
+    # Keep CDNs and proxies from compressing or buffering the stream; either
+    # makes every chunk arrive at once instead of as the model produces it.
+    response.headers["Cache-Control"] = "no-cache, no-transform"
+    response.headers["X-Accel-Buffering"] = "no"
+    return response
