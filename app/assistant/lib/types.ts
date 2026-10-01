@@ -2,7 +2,7 @@
 
 import type { ReadonlyJSONObject } from "assistant-stream/utils";
 
-export type StatePart =
+type StatePart =
   | { type: "reasoning"; step: number; text: string }
   | { type: "text"; step: number; text: string }
   | {
@@ -28,7 +28,7 @@ export type StateMessage =
 // The whole chat lives in the browser and is sent back with every request.
 export type ChatState = { messages: StateMessage[] };
 
-export type ModelInfo = {
+type ModelInfo = {
   id: string;
   label: string;
   provider: string;
