@@ -1,6 +1,7 @@
 "use client";
 
-import { ComposerPrimitive, ThreadPrimitive } from "@assistant-ui/react";
+import { useEffect, useSyncExternalStore } from "react";
+import { ComposerPrimitive, ThreadPrimitive, useAuiState } from "@assistant-ui/react";
 import { ArrowDownIcon, ArrowUpIcon, SquareIcon } from "lucide-react";
 import { STARTERS } from "../lib/starters";
 import { AssistantMessage, UserMessage } from "./Messages";
@@ -30,7 +31,29 @@ function Welcome() {
   );
 }
 
+const coarsePointer = "(pointer: coarse)";
+
+function useIsTouchDevice() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const query = window.matchMedia(coarsePointer);
+      query.addEventListener("change", onChange);
+      return () => query.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(coarsePointer).matches,
+    () => false,
+  );
+}
+
 function Composer() {
+  // On touch devices, sending closes the on-screen keyboard so the reply is
+  // visible, and the input isn't refocused when the reply starts.
+  const touch = useIsTouchDevice();
+  const running = useAuiState((s) => s.thread.isRunning);
+  useEffect(() => {
+    if (touch && running) (document.activeElement as HTMLElement | null)?.blur();
+  }, [touch, running]);
+
   return (
     <ComposerPrimitive.Root className="flex flex-col gap-2 rounded-3xl border border-white/12 bg-white/[0.04] p-2.5 backdrop-blur-md transition-colors focus-within:border-white/30">
       <ComposerPrimitive.Input
@@ -39,6 +62,8 @@ function Composer() {
         placeholder="Send a message…"
         aria-label="Message input"
         enterKeyHint="send"
+        unstable_focusOnRunStart={!touch}
+        unstable_focusOnScrollToBottom={!touch}
         className="max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base leading-6 text-text caret-text outline-hidden placeholder:text-muted"
         data-testid="composer-input"
       />
