@@ -2,6 +2,8 @@
 #
 #   GET  /api/assistant/config  models, tools and the default system prompt
 #                               the UI starts from
+#   GET  /api/assistant/stream-test  10 timed chunks, no model or key; use it
+#                               to tell platform buffering from model streaming
 #   POST /api/assistant/chat    streams one assistant turn (assistant-ui
 #                               "data stream" transport; chat state lives in
 #                               the browser and is sent back every request)
@@ -9,12 +11,15 @@
 # Nothing here injects a prompt: the system prompt, model, reasoning toggle
 # and enabled tools all come from the request.
 
+import asyncio
 import copy
+import time
 from typing import Any
 
 from assistant_stream import RunController, create_run
 from assistant_stream.serialization import DataStreamResponse
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
@@ -66,6 +71,21 @@ def _user_text(command: dict[str, Any]) -> str:
     return "\n".join(
         p["text"] for p in message.get("parts", []) if p.get("type") == "text" and p.get("text")
     ).strip()
+
+
+@router.get("/stream-test")
+async def stream_test() -> StreamingResponse:
+    """Streams one line every 0.5s. If a client sees them all at once, something
+    between the function and the client is buffering the response."""
+
+    async def lines():
+        t0 = time.monotonic()
+        for i in range(1, 11):
+            yield f"chunk {i}/10 at +{time.monotonic() - t0:.1f}s\n"
+            await asyncio.sleep(0.5)
+
+    # Same media type as the chat stream, so it takes the same path.
+    return StreamingResponse(lines(), media_type="text/plain; charset=utf-8")
 
 
 @router.post("/chat")
