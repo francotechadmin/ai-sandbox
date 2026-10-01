@@ -102,7 +102,7 @@ def test_config_lists_models_tools_and_default_prompt():
     by_id = {m["id"]: m for m in data["models"]}
     assert by_id["claude-haiku-4-5"]["available"] is False  # no key in test env
     assert by_id["demo-fake"]["available"] is True
-    assert {t["name"] for t in data["tools"]} == {"calculator", "get_current_time"}
+    assert {t["name"] for t in data["tools"]} == {"calculator", "get_current_time", "get_weather"}
     assert data["defaultSystemPrompt"]
 
 
@@ -217,3 +217,43 @@ def test_calculator_is_safe_and_correct():
     assert calculator.invoke({"expression": "1/0"}).startswith("Error")
     assert calculator.invoke({"expression": "__import__('os').system('echo hi')"}).startswith("Error")
     assert calculator.invoke({"expression": "9**9**9"}).startswith("Error")
+
+
+def test_weather_formats_forecast_and_picks_place_by_hint(monkeypatch):
+    from api.assistant import tools
+
+    seen = []
+
+    def fake_get_json(url, params):
+        seen.append((url, params))
+        if url == tools._GEOCODE_URL:
+            return {"results": [
+                {"name": "Houston", "admin1": "Mississippi", "country": "United States", "latitude": 1.0, "longitude": 1.0},
+                {"name": "Houston", "admin1": "Texas", "country": "United States", "latitude": 29.76, "longitude": -95.37},
+            ]}
+        return {
+            "current": {"temperature_2m": 88.1, "apparent_temperature": 95.0, "relative_humidity_2m": 70,
+                        "wind_speed_10m": 9.3, "weather_code": 2},
+            "daily": {"temperature_2m_max": [91.0], "temperature_2m_min": [76.5], "precipitation_probability_max": [20]},
+        }
+
+    monkeypatch.setattr(tools, "_get_json", fake_get_json)
+    out = tools.get_weather.invoke({"location": "Houston, Texas"})
+    assert out.startswith("Houston, Texas, United States: partly cloudy, 88.1°F")
+    assert "high 91.0°F, low 76.5°F" in out and "mph" in out
+    assert seen[0][1]["name"] == "Houston"  # hint is not sent to the geocoder
+    assert seen[1][1]["latitude"] == 29.76  # and it picked the Texas result
+
+
+def test_weather_errors_are_returned_not_raised(monkeypatch):
+    from api.assistant import tools
+
+    monkeypatch.setattr(tools, "_get_json", lambda url, params: {})
+    assert tools.get_weather.invoke({"location": "Nowhereville"}).startswith("Error: could not find")
+    assert tools.get_weather.invoke({"location": "x", "units": "kelvin"}).startswith("Error: units")
+
+    def boom(url, params):
+        raise OSError("offline")
+
+    monkeypatch.setattr(tools, "_get_json", boom)
+    assert "weather lookup failed" in tools.get_weather.invoke({"location": "Paris"})

@@ -33,9 +33,13 @@ rendered as it happens.
 
 ## Tools
 
-`get_current_time` and `calculator` (`api/assistant/tools.py`) exist to show
-tool calls streaming and resolving in the UI. Each can be switched off in the
-settings panel; the model only sees the enabled ones.
+`get_current_time`, `calculator` and `get_weather` (`api/assistant/tools.py`)
+exist to show tool calls streaming and resolving in the UI. Each can be
+switched off in the settings panel; the model only sees the enabled ones.
+
+`get_weather` uses [Open-Meteo](https://open-meteo.com) (free, no API key):
+it geocodes the place name, then fetches current conditions and today's
+high/low in °F by default or °C on request. Tests mock the HTTP layer.
 
 ## Running it
 
