@@ -12,16 +12,15 @@
   --color-red: #d3654f;
 
   /* Landing page */
-  --color-ultra: #2336f5;
-  --color-sun: #ffd84d;
-  --color-ink: #101223;
+  --color-void: #06070c;
+  --color-bone: #ece9e2;
 
   --font-mono:
     SF Mono, ui-monospace, JetBrains Mono, Menlo, Consolas, monospace;
   --font-display:
-    'Bricolage Grotesque Variable', -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif;
+    'Instrument Serif', Iowan Old Style, Georgia, serif;
   --font-sans:
-    'Instrument Sans Variable', -apple-system, BlinkMacSystemFont, Segoe UI, Inter, Roboto, sans-serif;
+    'Geist Variable', -apple-system, BlinkMacSystemFont, Segoe UI, Inter, Roboto, sans-serif;
 }
 
 /*
