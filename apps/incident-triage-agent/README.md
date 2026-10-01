@@ -27,14 +27,9 @@ Every run populates a trace panel: policy version, approval identity,
 latency, cost, an immutable audit entry id, and the specific evidence
 citations the recommendation relied on.
 
-## Run it
+## Live
 
-```bash
-npm install
-npm run dev
-```
-
-Open http://localhost:3000.
+Deployed on Vercel — _add link here after deploy_.
 
 ## Notes
 
