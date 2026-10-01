@@ -31,7 +31,7 @@ RECURSION_LIMIT = 15
 
 class Settings(BaseModel):
     model: str | None = None
-    reasoning: bool = False
+    reasoning: bool = True  # on whenever the model supports it
     systemPrompt: str = ""
     tools: list[str] = Field(default_factory=list)
 

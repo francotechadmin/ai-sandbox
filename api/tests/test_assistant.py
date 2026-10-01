@@ -2,6 +2,8 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
+
+from api.assistant.router import ChatRequest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from api.assistant import registry
@@ -72,6 +74,37 @@ def test_anthropic_reasoning_on_enables_thinking_and_leaves_temperature_alone():
     assert "temperature" not in params
 
 
+def test_anthropic_adaptive_style_uses_effort_not_budget():
+    adaptive = registry.ModelSpec(
+        "s", "S", "anthropic", "claude-sonnet-5-5",
+        reasoning={"supported": True, "style": "adaptive", "effort": "medium", "maxTokens": 8000},
+    )
+    on = registry.model_params(adaptive, reasoning=True)
+    assert on["thinking"] == {"type": "adaptive", "display": "summarized"}
+    assert on["output_config"] == {"effort": "medium"} and on["max_tokens"] == 8000
+    assert "budget_tokens" not in str(on)
+    # Can't be disabled on these models; "off" just omits it.
+    assert "thinking" not in registry.model_params(adaptive, reasoning=False)
+
+
+def test_every_configured_anthropic_model_builds_a_valid_request(monkeypatch):
+    # Catches provider-side parameter rules (e.g. budget_tokens rejected on
+    # newer models) without a network call.
+    from langchain_core.messages import HumanMessage
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    for s in registry.list_models():
+        if s.provider != "anthropic":
+            continue
+        for reasoning in (True, False):
+            model = registry.build_model(s, reasoning)
+            model._get_request_payload([HumanMessage(content="hi")])
+
+
+def test_reasoning_defaults_on_in_the_api():
+    assert ChatRequest.model_fields["settings"].default_factory().reasoning is True
+
+
 def test_anthropic_reasoning_off_has_no_thinking():
     assert "thinking" not in registry.model_params(spec("anthropic"), reasoning=False)
 
@@ -138,7 +171,8 @@ def test_tool_call_is_streamed_and_resolved():
 
 def test_tools_are_only_available_when_enabled():
     state = run_chat("please calc 1+1", tools=[])
-    assert [p["type"] for p in state["messages"][-1]["parts"]] == ["text"]
+    types = [p["type"] for p in state["messages"][-1]["parts"]]
+    assert "tool-call" not in types and types[-1] == "text"
 
 
 def test_second_turn_continues_the_conversation():

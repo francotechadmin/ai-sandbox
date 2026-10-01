@@ -43,7 +43,6 @@ export type AssistantConfig = {
 
 export type Settings = {
   model: string;
-  reasoning: boolean;
   systemPrompt: string;
   tools: string[];
 };

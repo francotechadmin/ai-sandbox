@@ -8,6 +8,7 @@
       "model": "claude-haiku-4-5-20251001",
       "reasoning": {
         "supported": true,
+        "style": "budget",
         "budgetTokens": 4000,
         "maxTokens": 8000
       },
@@ -31,7 +32,8 @@
       "model": "claude-sonnet-5-5",
       "reasoning": {
         "supported": true,
-        "budgetTokens": 4000,
+        "style": "adaptive",
+        "effort": "medium",
         "maxTokens": 8000
       },
       "maxTokens": 4096

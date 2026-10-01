@@ -17,8 +17,6 @@ export function SettingsPanel({
   onClose: () => void;
   className?: string;
 }) {
-  const model = config.models.find((m) => m.id === settings.model);
-  const reasoningSupported = Boolean(model?.supportsReasoning);
   const label = "text-[11px] font-semibold uppercase tracking-wide text-muted";
 
   return (
@@ -54,24 +52,6 @@ export function SettingsPanel({
           ))}
         </select>
       </div>
-
-      <label className={`flex items-center justify-between gap-3 ${reasoningSupported ? "" : "opacity-50"}`}>
-        <span>
-          <span className={label}>Reasoning</span>
-          <span className="block text-[12px] text-muted">
-            {reasoningSupported ? "Show the model’s thinking" : "Not supported by this model"}
-          </span>
-        </span>
-        <input
-          type="checkbox"
-          role="switch"
-          aria-label="Reasoning"
-          checked={settings.reasoning && reasoningSupported}
-          disabled={!reasoningSupported}
-          onChange={(e) => onChange({ ...settings, reasoning: e.target.checked })}
-          className="h-4 w-4 accent-amber"
-        />
-      </label>
 
       <fieldset className="flex flex-col gap-1.5">
         <legend className={label}>Tools</legend>

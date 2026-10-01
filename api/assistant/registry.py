@@ -1,8 +1,11 @@
 # Model registry for the assistant. The list of models lives in
 # config/models.json, not in code — add or change a model by editing that
-# file. Reasoning is a per-request toggle handled entirely here: the UI only
-# sends a boolean, and each provider's own switch (Anthropic extended
-# thinking, OpenAI reasoning effort + summaries) is set from the registry.
+# file. Reasoning is on by default for models that support it, and how it is
+# switched on is decided here, per model, from the registry entry:
+#   anthropic "budget"   extended thinking with a token budget (Haiku 4.5)
+#   anthropic "adaptive" adaptive thinking + effort (Sonnet 5 and newer, which
+#                        reject budget_tokens)
+#   openai               Responses API reasoning effort + summaries
 
 import json
 import os
@@ -106,6 +109,24 @@ def model_params(spec: ModelSpec, reasoning: bool) -> dict[str, Any]:
     cfg = spec.reasoning
 
     if spec.provider == "anthropic":
+        style = cfg.get("style", "budget")
+        if style == "adaptive":
+            # Newer models: no budget_tokens. Thinking is adaptive and effort
+            # sets how much of it to use. "summarized" is needed to receive
+            # the reasoning text at all (the default omits it).
+            # Some of these models can't turn thinking off (the API rejects
+            # {"type": "disabled"}), so "off" just omits the setting and the
+            # reasoning text isn't shown.
+            params = {"model": spec.model}
+            if on:
+                params["thinking"] = {"type": "adaptive", "display": "summarized"}
+                params["output_config"] = {"effort": cfg.get("effort", "medium")}
+            max_tokens = cfg.get("maxTokens") if on else spec.max_tokens
+            if max_tokens:
+                params["max_tokens"] = int(max_tokens)
+            return params
+        if style != "budget":
+            raise ModelConfigError(f"{spec.label}: unknown Anthropic reasoning style '{style}'.")
         # Extended thinking requires temperature to be left at its default and
         # max_tokens > budget_tokens, so neither is set in the "on" case.
         if on:
@@ -115,7 +136,7 @@ def model_params(spec: ModelSpec, reasoning: bool) -> dict[str, Any]:
                 "thinking": {"type": "enabled", "budget_tokens": budget},
                 "max_tokens": int(cfg.get("maxTokens", budget + 4096)),
             }
-        params: dict[str, Any] = {"model": spec.model}
+        params = {"model": spec.model}
         if spec.max_tokens:
             params["max_tokens"] = spec.max_tokens
         return params

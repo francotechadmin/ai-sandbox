@@ -1,7 +1,7 @@
 # Assistant
 
 A streaming chat agent. This is the core the other demos can build on: one
-chat surface where the model, reasoning, tools and system prompt are all
+chat surface where the model, tools and system prompt are all
 chosen at runtime, and everything the agent does (thinking, tool calls) is
 rendered as it happens.
 
@@ -14,13 +14,17 @@ rendered as it happens.
 - **Models are config, not code** — `api/assistant/config/models.json` lists
   them (currently Claude Haiku 4.5 and GPT-5 mini). Add a model by adding an
   entry. A model with no API key on the server shows as disabled in the UI.
-- **Reasoning toggle, handled by the backend** — the UI sends a boolean;
-  `api/assistant/registry.py` turns it into each provider's own switch
-  (Anthropic extended thinking with a token budget; OpenAI reasoning effort
-  plus streamed summaries via the Responses API). Provider differences are
-  normalised in `api/assistant/stream.py`, so the UI only ever receives
-  reasoning / text / tool-call parts.
-- **No hardcoded prompts** — the system prompt, model, reasoning toggle and
+- **Reasoning is on by default, handled by the backend** — no UI toggle.
+  `api/assistant/registry.py` turns it on per model, using each model's own
+  mechanism, chosen by `reasoning.style` in `models.json`: `budget` (Anthropic
+  extended thinking with a token budget, e.g. Haiku 4.5), `adaptive`
+  (adaptive thinking plus `output_config.effort`, required by Sonnet 5 and
+  newer, which reject `budget_tokens`), and OpenAI reasoning effort plus
+  streamed summaries via the Responses API. A test builds a request for every
+  configured Anthropic model so a model that rejects its parameters fails in
+  CI. Provider differences are normalised in `api/assistant/stream.py`, so the
+  UI only ever receives reasoning / text / tool-call parts.
+- **No hardcoded prompts** — the system prompt, model and
   enabled tools are sent with every request from the settings panel. The only
   prompt text in the repo is the editable starting value in
   `api/assistant/config/default_system_prompt.md`; "Reset" restores it.
