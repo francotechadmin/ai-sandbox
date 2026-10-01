@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { INCIDENTS, type IncidentSeed } from "./lib/incidents";
 
+type IncidentKey = keyof typeof INCIDENTS;
+
 type Document = {
   id: string;
   version: string;
@@ -51,66 +53,84 @@ type TriageResponse = {
   trace: Trace;
 };
 
-type IncidentDisplay = Pick<IncidentSeed, "alert" | "note" | "assetLabel">;
-
-const EMPTY_INCIDENT: IncidentDisplay = {
-  alert: "Waiting for scenario…",
-  note: "Waiting for scenario…",
-  assetLabel: "—",
+type RunState = {
+  status: "running" | "done" | "error";
+  result?: TriageResponse;
+  error?: string;
 };
 
-const TAG_STYLES: Record<string, string> = {
-  fact: "bg-[#1f2a35] text-[#7db3d8]",
-  inference: "bg-[#2c2617] text-amber",
-  decision: "bg-[#1c2c24] text-green",
+const SEVERITY_DOT: Record<Assessment["severity"], string> = {
+  Low: "bg-green",
+  Medium: "bg-amber",
+  High: "bg-amber",
+  Critical: "bg-red",
 };
 
-const OUTCOME_STYLES: Record<string, string> = {
-  a: "bg-[#132a1e] text-green border border-[#234837]",
-  b: "bg-[#2c2617] text-amber border border-[#493c1d]",
-  c: "bg-[#301c1a] text-red border border-[#4a2a26]",
-  err: "bg-[#301c1a] text-red border border-[#4a2a26]",
+const STATUS_PILL: Record<"resolved" | "escalated" | "blocked" | "error", string> = {
+  resolved: "bg-[#1c2c24] text-green",
+  escalated: "bg-[#2c2617] text-amber",
+  blocked: "bg-[#301c1a] text-red",
+  error: "bg-[#301c1a] text-red",
 };
 
-const panelClass = "rounded-xl border border-line bg-panel p-4";
-const fieldValClass = "rounded-md border border-line bg-panel2 px-2.5 py-2 text-[13px] leading-relaxed";
-const stepClass = "rounded-lg border border-[#3a4451] bg-panel2 px-3.5 py-3";
-const stepHeadClass = "flex items-center justify-between text-xs text-muted";
-const stepTitleClass = "mb-1.5 mt-0.5 text-[13px] font-semibold";
-const stepBodyClass = "text-[12.5px] leading-relaxed text-[#c6cbd3]";
-const traceRowClass = "flex justify-between border-b border-line py-1.5 text-xs last:border-none";
+function statusForResult(result?: TriageResponse): { label: string; style: string } | null {
+  if (!result) return null;
+  switch (result.outcome.path) {
+    case "A":
+      return { label: "Resolved", style: STATUS_PILL.resolved };
+    case "B":
+      return { label: "Escalated", style: STATUS_PILL.escalated };
+    case "C":
+      return { label: "Blocked", style: STATUS_PILL.blocked };
+    default:
+      return { label: "Error", style: STATUS_PILL.error };
+  }
+}
 
-function Tag({ kind, children }: { kind: string; children: React.ReactNode }) {
+function TimelineEntry({
+  index,
+  label,
+  kind,
+  children,
+}: {
+  index: number;
+  label: string;
+  kind: "evidence" | "model" | "policy" | "decision";
+  children: React.ReactNode;
+}) {
+  const dot: Record<"evidence" | "model" | "policy" | "decision", string> = {
+    evidence: "bg-[#7db3d8]",
+    model: "bg-amber",
+    policy: "bg-[#8b95a3]",
+    decision: "bg-green",
+  };
   return (
-    <span className={`rounded-full px-[7px] py-0.5 text-[10px] font-semibold ${TAG_STYLES[kind]}`}>
-      {children}
-    </span>
+    <li
+      className="relative animate-[fadein_0.3s_ease_forwards] pb-5 pl-6 opacity-0 last:pb-0"
+      style={{ animationDelay: `${index * 120}ms` }}
+    >
+      <span className={`absolute left-0 top-1 h-2 w-2 rounded-full ${dot[kind]}`} />
+      {index < 3 && <span className="absolute left-[3px] top-4 h-full w-px bg-line" />}
+      <div className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+        {label}
+      </div>
+      <div className="text-[13px] leading-relaxed text-[#d5d9de]">{children}</div>
+    </li>
   );
 }
 
 export default function IncidentTriagePage() {
-  const [incident, setIncident] = useState<IncidentDisplay>(EMPTY_INCIDENT);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<TriageResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [runningKey, setRunningKey] = useState<string | null>(null);
+  const [activeKey, setActiveKey] = useState<IncidentKey | null>(null);
+  const [runs, setRuns] = useState<Partial<Record<IncidentKey, RunState>>>({});
 
-  function reset() {
-    setIncident(EMPTY_INCIDENT);
-    setResult(null);
-    setError(null);
-    setLoading(false);
-    setRunningKey(null);
-  }
+  const active: IncidentSeed | null = activeKey ? INCIDENTS[activeKey] : null;
+  const run = activeKey ? runs[activeKey] : undefined;
 
-  async function run(key: keyof typeof INCIDENTS) {
-    if (loading) return;
+  async function open(key: IncidentKey) {
+    setActiveKey(key);
+    if (runs[key]) return; // already triaged — just show it
+    setRuns((prev) => ({ ...prev, [key]: { status: "running" } }));
     const seed = INCIDENTS[key];
-    setResult(null);
-    setError(null);
-    setRunningKey(key);
-    setIncident({ alert: seed.alert, note: seed.note, assetLabel: seed.assetLabel });
-    setLoading(true);
     try {
       const res = await fetch("/api/incident-triage/triage", {
         method: "POST",
@@ -119,223 +139,220 @@ export default function IncidentTriagePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Request failed.");
-      setResult(data as TriageResponse);
+      setRuns((prev) => ({ ...prev, [key]: { status: "done", result: data as TriageResponse } }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed.");
-    } finally {
-      setLoading(false);
+      setRuns((prev) => ({
+        ...prev,
+        [key]: { status: "error", error: err instanceof Error ? err.message : "Request failed." },
+      }));
     }
   }
 
-  const pathKey =
-    result?.outcome.path === "A"
-      ? "a"
-      : result?.outcome.path === "B"
-        ? "b"
-        : result?.outcome.path === "C"
-          ? "c"
-          : "err";
-
   return (
-    <>
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-bg/90 px-5 py-3.5 backdrop-blur-sm">
-        <div>
-          <h1 className="text-[15px] font-semibold">Industrial Incident Triage Agent</h1>
-          <p className="mt-0.5 text-xs text-muted">
-            Live LLM call via LangChain · deterministic policy gate · real evidence retrieval
-          </p>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-bg/95 px-6 py-3 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-amber/90 text-xs font-bold text-bg">
+            A
+          </div>
+          <span className="text-sm font-semibold">Atlas Ops Console</span>
         </div>
-        <button
-          className="rounded-md border border-line px-3 py-[7px] text-xs text-muted hover:border-[#3a4451] hover:text-text"
-          onClick={reset}
-        >
-          Reset
-        </button>
+        <span className="text-xs text-muted">Unit 1–3 · Gulf Coast Facility</span>
       </header>
 
-      <main className="mx-auto grid max-w-[1180px] grid-cols-1 gap-4 p-5 md:grid-cols-[1.1fr_1.4fr_1.1fr]">
-        <section className={panelClass}>
-          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Incident intake
-          </h2>
-          <div className="mb-3">
-            <label className="mb-1 block text-xs text-muted">Alert</label>
-            <div className={fieldValClass}>{incident.alert}</div>
+      <div className="mx-auto grid w-full max-w-[1280px] flex-1 grid-cols-1 gap-5 px-6 py-6 lg:grid-cols-[280px_1fr_300px]">
+        {/* Queue */}
+        <aside className="rounded-xl border border-line bg-panel p-3">
+          <div className="mb-2 flex items-center justify-between px-1">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+              Incident queue
+            </span>
+            <span className="rounded-full bg-panel2 px-2 py-0.5 text-[10px] font-semibold text-muted">
+              {Object.keys(INCIDENTS).length}
+            </span>
           </div>
-          <div className="mb-3">
-            <label className="mb-1 block text-xs text-muted">Technician note</label>
-            <div className={fieldValClass}>{incident.note}</div>
-          </div>
-          <div className="mb-3">
-            <label className="mb-1 block text-xs text-muted">Asset</label>
-            <div className={fieldValClass}>{incident.assetLabel}</div>
-          </div>
-          <h2 className="mb-3 mt-[18px] text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Run a path
-          </h2>
-          <div className="flex flex-col gap-2">
-            {(Object.entries(INCIDENTS) as [keyof typeof INCIDENTS, IncidentSeed][]).map(
-              ([key, s]) => (
-                <button
-                  key={key}
-                  disabled={loading}
-                  onClick={() => run(key)}
-                  className="rounded-lg border border-line bg-panel2 px-3 py-2.5 text-left text-text hover:border-amber disabled:cursor-default disabled:opacity-40 disabled:hover:border-line"
-                >
-                  <strong className="block text-[13px]">
-                    {s.label}
-                    {loading && runningKey === key ? " — running…" : ""}
-                  </strong>
-                  <span className="text-xs text-muted">{s.sub}</span>
-                </button>
-              )
-            )}
-          </div>
-        </section>
-
-        <section className={panelClass}>
-          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Live run
-          </h2>
-          {!result && !loading && !error && (
-            <div className="text-[12.5px] leading-relaxed text-muted">
-              Pick a path. This calls a real LLM through LangChain and runs an actual retrieval +
-              policy check against the request — nothing here is pre-scripted.
-            </div>
-          )}
-          {loading && (
-            <div className="text-[12.5px] leading-relaxed text-muted">
-              Retrieving evidence, running policy check, calling the model…
-            </div>
-          )}
-          {error && (
-            <div className={`rounded-lg px-3.5 py-3 text-[13px] font-semibold ${OUTCOME_STYLES.err}`}>
-              Error: {error}
-            </div>
-          )}
-
-          {result && (
-            <div className="flex flex-col gap-2.5">
-              <div className={stepClass}>
-                <div className={stepHeadClass}>
-                  <span>1 · Ground</span>
-                  <Tag kind="fact">fact</Tag>
-                </div>
-                <div className={stepTitleClass}>Retrieved evidence</div>
-                <div className={stepBodyClass}>
-                  {result.evidence.docs.length === 0 && "No matching procedure on file."}
-                  {result.evidence.docs.map((d) => (
-                    <div key={d.id + d.version}>
-                      <span className="font-mono text-[11px] text-[#7db3d8]">
-                        {d.id} {d.version}
-                      </span>{" "}
-                      — {d.current ? "current" : "superseded"}, effective {d.effective}
+          <ul className="flex flex-col gap-1.5">
+            {(Object.entries(INCIDENTS) as [IncidentKey, IncidentSeed][]).map(([key, inc]) => {
+              const r = runs[key];
+              const status = statusForResult(r?.result);
+              const isActive = key === activeKey;
+              return (
+                <li key={key}>
+                  <button
+                    onClick={() => open(key)}
+                    className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                      isActive
+                        ? "border-amber/60 bg-panel2"
+                        : "border-transparent bg-panel2/40 hover:border-line hover:bg-panel2"
+                    }`}
+                  >
+                    <div className="mb-0.5 flex items-center justify-between gap-2">
+                      <span className="font-mono text-[11px] text-muted">{inc.id}</span>
+                      {status ? (
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${status.style}`}>
+                          {status.label}
+                        </span>
+                      ) : r?.status === "running" ? (
+                        <span className="text-[10px] text-muted">Triaging…</span>
+                      ) : (
+                        <span className="rounded-full bg-panel px-2 py-0.5 text-[10px] font-semibold text-muted">
+                          New
+                        </span>
+                      )}
                     </div>
-                  ))}
-                  {result.evidence.conflict && (
-                    <div className="mt-1.5 text-amber">
-                      ⚠ Conflicting versions on file for this asset.
-                    </div>
-                  )}
-                </div>
-              </div>
+                    <div className="text-[13px] font-medium leading-snug text-text">{inc.title}</div>
+                    <div className="mt-0.5 text-[11px] text-muted">{inc.assetLabel}</div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </aside>
 
-              <div className={stepClass}>
-                <div className={stepHeadClass}>
-                  <span>2 · Assess</span>
-                  <Tag kind="inference">model inference</Tag>
-                </div>
-                <div className={stepTitleClass}>Model assessment</div>
-                <div className={stepBodyClass}>
-                  {result.assessment ? (
-                    <>
-                      Severity: <b>{result.assessment.severity}</b> · confidence{" "}
-                      {result.assessment.confidence.toFixed(2)}
-                      <br />
-                      {result.assessment.rationale}
-                      <br />
-                      <span className="text-muted">
-                        Recommends: {result.assessment.recommendedAction}
-                      </span>
-                    </>
-                  ) : (
-                    "Model call did not return an assessment."
-                  )}
-                </div>
-              </div>
-
-              <div className={stepClass}>
-                <div className={stepHeadClass}>
-                  <span>3 · Policy</span>
-                  <Tag kind="decision">deterministic code</Tag>
-                </div>
-                <div className={stepTitleClass}>Policy check (runs independent of the model)</div>
-                <div className={stepBodyClass}>
-                  {result.policy.blocked ? (
-                    <>
-                      Blocked by{" "}
-                      <span className="font-mono text-[11px] text-amber">{result.policy.rule}</span>{" "}
-                      — {result.policy.reason}.
-                    </>
-                  ) : (
-                    <>No policy violation detected. Risk tier {result.policy.tier}.</>
-                  )}
-                </div>
-              </div>
-
-              <div className={stepClass}>
-                <div className={stepHeadClass}>
-                  <span>4 · Outcome</span>
-                  <Tag kind="decision">system decision</Tag>
-                </div>
-                <div className={stepTitleClass}>Result</div>
-                <div className={stepBodyClass}>{result.outcome.text}</div>
-              </div>
-
-              <div className={`rounded-lg px-3.5 py-3 text-[13px] font-semibold ${OUTCOME_STYLES[pathKey]}`}>
-                Path {result.outcome.path} — {result.trace.approval}
-              </div>
+        {/* Detail + timeline */}
+        <main className="rounded-xl border border-line bg-panel p-5">
+          {!active ? (
+            <div className="flex h-full min-h-[320px] items-center justify-center text-sm text-muted">
+              Select an incident to view triage details.
             </div>
-          )}
-        </section>
-
-        <section className={panelClass}>
-          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">
-            Trace
-          </h2>
-          {!result ? (
-            <div className="text-[12.5px] leading-relaxed text-muted">No run yet.</div>
           ) : (
             <div>
-              <div className={traceRowClass}>
-                <span className="text-muted">Policy version</span>
-                <span className="font-mono text-[11.5px]">{result.trace.policyVersion}</span>
+              <div className="mb-4 flex items-start justify-between border-b border-line pb-4">
+                <div>
+                  <div className="mb-1 font-mono text-xs text-muted">{active.id}</div>
+                  <h1 className="text-lg font-semibold">{active.title}</h1>
+                  <p className="mt-1 text-sm text-muted">{active.assetLabel}</p>
+                </div>
+                {run?.status === "done" && statusForResult(run.result) && (
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      statusForResult(run.result)!.style
+                    }`}
+                  >
+                    {statusForResult(run.result)!.label}
+                  </span>
+                )}
               </div>
-              <div className={traceRowClass}>
-                <span className="text-muted">Model</span>
-                <span className="font-mono text-[11.5px]">{result.trace.model}</span>
+
+              <div className="mb-5 space-y-2 rounded-lg bg-panel2 p-3.5 text-[13px] leading-relaxed">
+                <p>
+                  <span className="text-muted">Alert — </span>
+                  {active.alert}
+                </p>
+                <p>
+                  <span className="text-muted">Technician note — </span>
+                  {active.note}
+                </p>
               </div>
-              <div className={traceRowClass}>
-                <span className="text-muted">Approval</span>
-                <span className="font-mono text-[11.5px]">{result.trace.approval}</span>
-              </div>
-              <div className={traceRowClass}>
-                <span className="text-muted">Latency</span>
-                <span className="font-mono text-[11.5px]">{result.trace.latencyMs} ms</span>
-              </div>
-              <div className={traceRowClass}>
-                <span className="text-muted">Timestamp</span>
-                <span className="font-mono text-[11.5px]">{result.trace.timestamp}</span>
+
+              {run?.status === "running" && (
+                <div className="py-6 text-sm text-muted">Triaging…</div>
+              )}
+
+              {run?.status === "error" && (
+                <div className="rounded-lg border border-[#4a2a26] bg-[#301c1a] px-3.5 py-3 text-sm text-red">
+                  {run.error}
+                </div>
+              )}
+
+              {run?.status === "done" && run.result && (
+                <ol className="mt-2">
+                  <TimelineEntry index={0} label="Evidence" kind="evidence">
+                    {run.result.evidence.docs.length === 0 ? (
+                      "No matching procedure on file for this asset."
+                    ) : (
+                      <>
+                        {run.result.evidence.docs.map((d) => (
+                          <div key={d.id + d.version}>
+                            <span className="font-mono text-[12px] text-[#7db3d8]">
+                              {d.id} {d.version}
+                            </span>{" "}
+                            — {d.current ? "current" : "superseded"}, effective {d.effective}
+                          </div>
+                        ))}
+                        {run.result.evidence.conflict && (
+                          <div className="mt-1 text-amber">
+                            Conflicting versions on file for this asset.
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </TimelineEntry>
+
+                  <TimelineEntry index={1} label="Assessment" kind="model">
+                    {run.result.assessment ? (
+                      <>
+                        <span className="inline-flex items-center gap-1.5 font-medium">
+                          <span
+                            className={`inline-block h-1.5 w-1.5 rounded-full ${
+                              SEVERITY_DOT[run.result.assessment.severity]
+                            }`}
+                          />
+                          {run.result.assessment.severity} severity
+                        </span>{" "}
+                        <span className="text-muted">
+                          ({Math.round(run.result.assessment.confidence * 100)}% confidence)
+                        </span>
+                        <p className="mt-1">{run.result.assessment.rationale}</p>
+                      </>
+                    ) : (
+                      "No assessment returned."
+                    )}
+                  </TimelineEntry>
+
+                  <TimelineEntry index={2} label="Policy check" kind="policy">
+                    {run.result.policy.blocked ? (
+                      <>
+                        Blocked —{" "}
+                        <span className="font-mono text-[12px] text-amber">
+                          {run.result.policy.rule}
+                        </span>{" "}
+                        · {run.result.policy.reason}
+                      </>
+                    ) : (
+                      `No violation. Risk tier ${run.result.policy.tier}.`
+                    )}
+                  </TimelineEntry>
+
+                  <TimelineEntry index={3} label="Outcome" kind="decision">
+                    {run.result.outcome.text}
+                  </TimelineEntry>
+                </ol>
+              )}
+            </div>
+          )}
+        </main>
+
+        {/* Resolution / trace */}
+        <aside className="rounded-xl border border-line bg-panel p-4">
+          <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted">
+            Resolution
+          </div>
+          {!run || run.status !== "done" || !run.result ? (
+            <div className="text-sm text-muted">
+              {run?.status === "running" ? "In progress…" : "No resolution yet."}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="rounded-lg bg-panel2 px-3 py-2.5 text-[13px]">{run.result.trace.approval}</div>
+              <div className="space-y-1.5 border-t border-line pt-3 font-mono text-[11px] text-muted">
+                <div className="flex justify-between">
+                  <span>Model</span>
+                  <span>{run.result.trace.model}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Policy</span>
+                  <span>{run.result.trace.policyVersion}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Latency</span>
+                  <span>{run.result.trace.latencyMs} ms</span>
+                </div>
               </div>
             </div>
           )}
-        </section>
-      </main>
-      <p className="mx-auto max-w-[1180px] px-5 pb-10 text-[11.5px] text-[#5c6673]">
-        Synthetic demo data only — no customer or employer records. The assessment step is a real
-        call to an LLM via LangChain; the policy check and retrieval are deterministic code that
-        run independently of the model and can override it.
-      </p>
-    </>
+        </aside>
+      </div>
+    </div>
   );
 }
