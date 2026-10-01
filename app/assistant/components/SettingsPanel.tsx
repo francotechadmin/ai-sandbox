@@ -1,5 +1,6 @@
 "use client";
 
+import { PlusIcon } from "lucide-react";
 import type { AssistantConfig, Settings } from "../lib/types";
 
 export function SettingsPanel({
@@ -17,22 +18,23 @@ export function SettingsPanel({
   onClose: () => void;
   className?: string;
 }) {
-  const label = "text-[11px] font-semibold uppercase tracking-wide text-muted";
+  const label = "text-[13px] font-medium text-text/80";
 
   return (
-    <aside className={`h-full min-h-0 flex-col gap-5 overflow-y-auto rounded-xl border border-line bg-panel p-4 ${className}`} data-testid="settings">
+    <aside className={`h-full min-h-0 flex-col gap-5 overflow-y-auto border-l border-line bg-panel p-5 ${className}`} data-testid="settings">
       <button
         type="button"
         onClick={onClose}
-        className="rounded-lg bg-amber px-3 py-2 text-[13px] font-semibold text-bg lg:hidden"
+        className="rounded-full bg-text px-4 py-2 text-[14px] font-semibold text-bg lg:hidden"
       >
         Done
       </button>
       <button
         onClick={onNewChat}
-        className="rounded-lg border border-line px-3 py-1.5 text-[13px] font-medium hover:border-[#3a4451]"
+        className="flex items-center justify-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[14px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
         data-testid="new-chat"
       >
+        <PlusIcon className="size-4" />
         New chat
       </button>
 
@@ -42,7 +44,7 @@ export function SettingsPanel({
           id="model"
           value={settings.model}
           onChange={(e) => onChange({ ...settings, model: e.target.value })}
-          className="rounded-lg border border-line bg-panel2 px-2.5 py-1.5 text-base outline-hidden lg:text-[13px]"
+          className="rounded-xl border border-line bg-panel2 px-3 py-2 text-base outline-hidden transition-colors focus:border-white/30 lg:text-[14px]"
         >
           {config.models.map((m) => (
             <option key={m.id} value={m.id} disabled={!m.available}>
@@ -56,7 +58,7 @@ export function SettingsPanel({
       <fieldset className="flex flex-col gap-1.5">
         <legend className={label}>Tools</legend>
         {config.tools.map((t) => (
-          <label key={t.name} className="flex items-start gap-2 text-[13px]">
+          <label key={t.name} className="flex items-start gap-2.5 text-[14px]">
             <input
               type="checkbox"
               checked={settings.tools.includes(t.name)}
@@ -68,11 +70,11 @@ export function SettingsPanel({
                     : settings.tools.filter((n) => n !== t.name),
                 })
               }
-              className="mt-0.5 h-4 w-4 accent-amber"
+              className="mt-0.5 h-4 w-4 accent-text"
             />
             <span>
               <span className="font-mono text-[12px]">{t.name}</span>
-              <span className="block text-[12px] text-muted">{t.description}</span>
+              <span className="mt-0.5 block text-[12px] leading-snug text-muted">{t.description}</span>
             </span>
           </label>
         ))}
@@ -83,7 +85,7 @@ export function SettingsPanel({
           <label className={label} htmlFor="system-prompt">System prompt</label>
           <button
             onClick={() => onChange({ ...settings, systemPrompt: config.defaultSystemPrompt })}
-            className="text-[11px] text-muted underline hover:text-text"
+            className="text-[12px] text-muted underline underline-offset-2 hover:text-text"
           >
             Reset
           </button>
@@ -93,9 +95,9 @@ export function SettingsPanel({
           value={settings.systemPrompt}
           onChange={(e) => onChange({ ...settings, systemPrompt: e.target.value })}
           placeholder="No system prompt — the model gets only your messages."
-          className="min-h-[140px] flex-1 resize-none rounded-lg border border-line bg-panel2 px-2.5 py-2 text-base leading-relaxed outline-hidden lg:text-[13px]"
+          className="min-h-[140px] flex-1 resize-none rounded-xl border border-line bg-panel2 px-3 py-2.5 text-base leading-relaxed outline-hidden transition-colors focus:border-white/30 lg:text-[14px]"
         />
-        <p className="text-[11px] text-muted">Applies to your next message. Stored in this browser only.</p>
+        <p className="text-[12px] text-muted">Applies to your next message. Stored in this browser only.</p>
       </div>
     </aside>
   );

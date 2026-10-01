@@ -37,7 +37,7 @@ function errorText(error: Error): string {
 function UserMessage() {
   return (
     <MessagePrimitive.Root className="flex justify-end px-2" data-testid="user-message">
-      <div className="max-w-[88%] whitespace-pre-wrap break-words rounded-2xl bg-panel2 px-4 py-2 text-[15px] leading-relaxed">
+      <div className="max-w-[88%] whitespace-pre-wrap break-words rounded-3xl bg-white/[0.07] px-4.5 py-2.5 text-[15px] leading-relaxed">
         <MessagePrimitive.Parts />
       </div>
     </MessagePrimitive.Root>
@@ -89,13 +89,33 @@ function AssistantMessage() {
   );
 }
 
+const STARTERS = [
+  "What's the weather in Houston right now?",
+  "Walk me through a plan to migrate a Postgres database.",
+  "Explain how reasoning models differ from regular ones.",
+];
+
 function Welcome() {
   return (
     <div className="flex flex-1 flex-col justify-center px-2 pb-10">
-      <p className="text-2xl font-medium tracking-tight">How can I help you today?</p>
-      <p className="mt-2 text-sm text-muted">
-        Pick a model and edit the system prompt on the right. With the calculator on, try “what is 1234 * 5678?”.
+      <h2 className="text-[clamp(2rem,5vw,3.25rem)] font-medium leading-[1.05] tracking-[-0.04em]">
+        What should we work on?
+      </h2>
+      <p className="mt-3 max-w-md text-[15px] leading-relaxed text-muted">
+        Pick a model and edit the system prompt in settings. Reasoning and tool calls show up as they happen.
       </p>
+      <div className="mt-7 flex flex-col items-start gap-2">
+        {STARTERS.map((prompt) => (
+          <ThreadPrimitive.Suggestion
+            key={prompt}
+            prompt={prompt}
+            send
+            className="rounded-full border border-white/12 bg-white/[0.03] px-4 py-2 text-start text-[14px] text-text/85 transition-colors hover:border-white/30 hover:bg-white/[0.07]"
+          >
+            {prompt}
+          </ThreadPrimitive.Suggestion>
+        ))}
+      </div>
     </div>
   );
 }
@@ -158,7 +178,7 @@ export function Chat({ settings }: { settings: Settings }) {
             </ThreadPrimitive.Messages>
           </div>
 
-          <div className="sticky bottom-0 mx-auto mt-4 flex w-full max-w-[44rem] flex-col gap-3 bg-panel pb-4">
+          <div className="sticky bottom-0 mx-auto mt-4 flex w-full max-w-[44rem] flex-col gap-3 bg-bg pb-4">
             <ThreadPrimitive.ScrollToBottom asChild>
               <button
                 type="button"
@@ -168,21 +188,21 @@ export function Chat({ settings }: { settings: Settings }) {
                 <ArrowDownIcon />
               </button>
             </ThreadPrimitive.ScrollToBottom>
-            <ComposerPrimitive.Root className="flex flex-col gap-2 rounded-3xl border border-line bg-panel2 p-2.5 transition-colors focus-within:border-[#3a4451]">
+            <ComposerPrimitive.Root className="flex flex-col gap-2 rounded-3xl border border-white/12 bg-white/[0.04] p-2.5 backdrop-blur-md transition-colors focus-within:border-white/30">
               <ComposerPrimitive.Input
                 rows={1}
                 autoFocus
                 placeholder="Send a message…"
                 aria-label="Message input"
                 enterKeyHint="send"
-                className="max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base leading-6 text-text caret-amber outline-hidden placeholder:text-muted"
+                className="max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base leading-6 text-text caret-text outline-hidden placeholder:text-muted"
                 data-testid="composer-input"
               />
               <div className="flex justify-end">
                 <ThreadPrimitive.If running={false}>
                   <ComposerPrimitive.Send
                     aria-label="Send message"
-                    className="flex size-8 items-center justify-center rounded-full bg-amber text-bg transition-opacity disabled:opacity-30"
+                    className="flex size-9 items-center justify-center rounded-full bg-text text-bg transition-opacity disabled:opacity-25"
                     data-testid="send"
                   >
                     <ArrowUpIcon className="size-4" />
@@ -191,7 +211,7 @@ export function Chat({ settings }: { settings: Settings }) {
                 <ThreadPrimitive.If running>
                   <ComposerPrimitive.Cancel
                     aria-label="Stop generating"
-                    className="flex size-8 items-center justify-center rounded-full bg-text text-bg"
+                    className="flex size-9 items-center justify-center rounded-full bg-text text-bg"
                     data-testid="stop"
                   >
                     <SquareIcon className="size-3.5 fill-current" />

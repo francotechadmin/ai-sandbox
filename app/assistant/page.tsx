@@ -30,17 +30,20 @@ export default function AssistantPage() {
   }
 
   return (
-    <div className="flex h-dvh flex-col">
-      <header className="flex items-center justify-between h-14 shrink-0 border-b border-line bg-bg/95 px-4 sm:px-6">
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="text-xs text-muted hover:text-text">← Sandbox</Link>
-          <span className="text-sm font-semibold">Assistant</span>
+    <div className="flex h-dvh flex-col bg-bg">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-line px-4 sm:px-6">
+        <div className="flex items-center gap-3 text-[15px]">
+          <Link href="/" className="font-medium tracking-tight text-text/70 transition-colors hover:text-text">
+            AI Sandbox
+          </Link>
+          <span className="text-line" aria-hidden>/</span>
+          <span className="font-medium tracking-tight">Assistant</span>
         </div>
         {config && settings && (
           <button
             type="button"
             onClick={() => setShowSettings(true)}
-            className="rounded-lg border border-line px-3 py-1 text-[13px] font-medium hover:border-[#3a4451] lg:hidden"
+            className="rounded-full border border-white/15 px-3.5 py-1 text-[13px] font-medium transition-colors hover:border-white/30 lg:hidden"
             data-testid="open-settings"
           >
             Settings
@@ -55,8 +58,14 @@ export default function AssistantPage() {
       ) : !config || !settings ? (
         <div className="m-6 text-sm text-muted">Loading…</div>
       ) : (
-        <div className="mx-auto grid min-h-0 w-full max-w-[1280px] flex-1 grid-cols-1 gap-5 px-2 py-2 sm:px-6 sm:py-5 lg:grid-cols-[1fr_320px]">
-          <main className="min-h-0 overflow-hidden rounded-xl border border-line bg-panel">
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_340px]">
+          <main className="relative isolate min-h-0 overflow-hidden">
+            {/* Faint flow pattern behind the thread, fading out downward. */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[28rem] bg-cover bg-center opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent)]"
+              style={{ backgroundImage: "url(/hero-flow.svg)" }}
+              aria-hidden
+            />
             <Chat key={chatKey} settings={settings} />
           </main>
           <SettingsPanel
@@ -68,7 +77,7 @@ export default function AssistantPage() {
               setShowSettings(false);
             }}
             onClose={() => setShowSettings(false)}
-            className={showSettings ? "fixed inset-0 top-14 z-20 flex rounded-none border-0" : "hidden lg:flex"}
+            className={showSettings ? "fixed inset-0 top-14 z-20 flex" : "hidden lg:flex"}
           />
         </div>
       )}
