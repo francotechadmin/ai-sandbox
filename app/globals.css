@@ -13,6 +13,8 @@
 
   --font-mono:
     SF Mono, ui-monospace, JetBrains Mono, Menlo, Consolas, monospace;
+  --font-serif:
+    Iowan Old Style, Palatino Linotype, Palatino, Charter, Georgia, serif;
   --font-sans:
     -apple-system, BlinkMacSystemFont, Segoe UI, Inter, Roboto, sans-serif;
 }
@@ -69,4 +71,18 @@
 @keyframes shimmer {
   from { background-position: 100% 0; }
   to { background-position: -100% 0; }
+}
+
+/* Landing hero: the example trace plays once on load, one step after another. */
+@keyframes trace-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.trace-step {
+  opacity: 0;
+  animation: trace-in 0.5s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.7s + 0.3s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .trace-step { opacity: 1; animation: none; }
 }
