@@ -17,7 +17,7 @@ export default function HomePage() {
           aria-hidden
         />
         <div
-          className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(6,7,12,0.88)_0%,rgba(6,7,12,0.45)_55%,rgba(6,7,12,0.1)_100%),linear-gradient(0deg,#06070c_0%,transparent_38%)]"
+          className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(6,7,12,0.82)_0%,rgba(6,7,12,0.35)_55%,rgba(6,7,12,0)_100%),linear-gradient(0deg,#06070c_0%,transparent_38%)]"
           aria-hidden
         />
 
@@ -34,7 +34,7 @@ export default function HomePage() {
 
           <div className="mt-auto pt-24">
             <h1
-              className="rise font-display text-[clamp(3.5rem,9.5vw,8.25rem)] font-normal leading-[0.94] tracking-[-0.02em]"
+              className="rise font-display text-[clamp(3rem,8.4vw,7.25rem)] font-medium leading-[1] tracking-[-0.05em]"
               style={delay(0)}
             >
               AI agents you
@@ -53,7 +53,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto w-full max-w-[1200px] px-5 pb-12 pt-10 sm:px-10 sm:pt-16" aria-labelledby="demos-heading">
-        <h2 id="demos-heading" className="font-display text-4xl tracking-tight sm:text-5xl">
+        <h2 id="demos-heading" className="font-display text-3xl font-medium tracking-[-0.03em] sm:text-4xl">
           Demos
         </h2>
         <ul className="mt-8 border-t border-white/15">
@@ -64,7 +64,7 @@ export default function HomePage() {
                 className="group -mx-3 flex items-start gap-6 rounded-lg px-3 py-8 transition-colors hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-bone sm:-mx-4 sm:px-4"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block font-display text-4xl tracking-tight sm:text-6xl">{demo.name}</span>
+                  <span className="block font-display text-3xl font-medium tracking-[-0.04em] sm:text-5xl">{demo.name}</span>
                   <span className="mt-3 block max-w-[38rem] text-base leading-relaxed text-bone/65">
                     {demo.description}
                   </span>

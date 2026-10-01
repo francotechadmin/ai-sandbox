@@ -42,8 +42,8 @@ for gy in range(-20, H + 20, 64):
         if len(pts) < 8:
             continue
         d = "M" + " ".join(f"{round(px)} {round(py)}" for px, py in pts)
-        opacity = round(rng.uniform(0.14, 0.62), 2)
-        width = round(rng.uniform(0.7, 1.5), 1)
+        opacity = round(rng.uniform(0.22, 0.85), 2)
+        width = round(rng.uniform(0.8, 1.7), 1)
         paths.append(f'<path d="{d}" stroke-opacity="{opacity}" stroke-width="{width}"/>')
 
 svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid slice">
