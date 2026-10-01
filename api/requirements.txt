@@ -1,0 +1,5 @@
+fastapi==0.115.0
+pydantic==2.9.2
+langchain-core==0.3.17
+langchain-anthropic==0.3.0
+langchain-openai==0.2.6
