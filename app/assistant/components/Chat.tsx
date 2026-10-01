@@ -37,7 +37,7 @@ function errorText(error: Error): string {
 function UserMessage() {
   return (
     <MessagePrimitive.Root className="flex justify-end px-2" data-testid="user-message">
-      <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-panel2 px-4 py-2 text-[15px] leading-relaxed">
+      <div className="max-w-[88%] whitespace-pre-wrap break-words rounded-2xl bg-panel2 px-4 py-2 text-[15px] leading-relaxed">
         <MessagePrimitive.Parts />
       </div>
     </MessagePrimitive.Root>
@@ -148,7 +148,7 @@ export function Chat({ settings }: { settings: Settings }) {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <ThreadPrimitive.Root className="flex h-full min-h-0 flex-col">
-        <ThreadPrimitive.Viewport className="flex flex-1 flex-col overflow-y-auto scroll-smooth px-5 pt-6">
+        <ThreadPrimitive.Viewport className="flex flex-1 flex-col overflow-y-auto scroll-smooth px-3 pt-4 sm:px-5 sm:pt-6">
           <div className="mx-auto flex w-full max-w-[44rem] flex-1 flex-col gap-6">
             <ThreadPrimitive.Empty>
               <Welcome />
@@ -175,7 +175,7 @@ export function Chat({ settings }: { settings: Settings }) {
                 placeholder="Send a message…"
                 aria-label="Message input"
                 enterKeyHint="send"
-                className="max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-[15px] leading-6 text-text caret-amber outline-hidden placeholder:text-muted"
+                className="max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base leading-6 text-text caret-amber outline-hidden placeholder:text-muted"
                 data-testid="composer-input"
               />
               <div className="flex justify-end">

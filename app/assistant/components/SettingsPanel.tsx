@@ -7,18 +7,29 @@ export function SettingsPanel({
   settings,
   onChange,
   onNewChat,
+  onClose,
+  className = "",
 }: {
   config: AssistantConfig;
   settings: Settings;
   onChange: (next: Settings) => void;
   onNewChat: () => void;
+  onClose: () => void;
+  className?: string;
 }) {
   const model = config.models.find((m) => m.id === settings.model);
   const reasoningSupported = Boolean(model?.supportsReasoning);
   const label = "text-[11px] font-semibold uppercase tracking-wide text-muted";
 
   return (
-    <aside className="flex h-full min-h-0 flex-col gap-5 overflow-y-auto rounded-xl border border-line bg-panel p-4" data-testid="settings">
+    <aside className={`h-full min-h-0 flex-col gap-5 overflow-y-auto rounded-xl border border-line bg-panel p-4 ${className}`} data-testid="settings">
+      <button
+        type="button"
+        onClick={onClose}
+        className="rounded-lg bg-amber px-3 py-2 text-[13px] font-semibold text-bg lg:hidden"
+      >
+        Done
+      </button>
       <button
         onClick={onNewChat}
         className="rounded-lg border border-line px-3 py-1.5 text-[13px] font-medium hover:border-[#3a4451]"
@@ -33,7 +44,7 @@ export function SettingsPanel({
           id="model"
           value={settings.model}
           onChange={(e) => onChange({ ...settings, model: e.target.value })}
-          className="rounded-lg border border-line bg-panel2 px-2.5 py-1.5 text-[13px] outline-hidden"
+          className="rounded-lg border border-line bg-panel2 px-2.5 py-1.5 text-base outline-hidden lg:text-[13px]"
         >
           {config.models.map((m) => (
             <option key={m.id} value={m.id} disabled={!m.available}>
@@ -102,7 +113,7 @@ export function SettingsPanel({
           value={settings.systemPrompt}
           onChange={(e) => onChange({ ...settings, systemPrompt: e.target.value })}
           placeholder="No system prompt — the model gets only your messages."
-          className="min-h-[140px] flex-1 resize-none rounded-lg border border-line bg-panel2 px-2.5 py-2 text-[13px] leading-relaxed outline-hidden"
+          className="min-h-[140px] flex-1 resize-none rounded-lg border border-line bg-panel2 px-2.5 py-2 text-base leading-relaxed outline-hidden lg:text-[13px]"
         />
         <p className="text-[11px] text-muted">Applies to your next message. Stored in this browser only.</p>
       </div>
