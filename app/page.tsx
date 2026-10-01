@@ -1,10 +1,39 @@
 import Link from "next/link";
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon, BrainIcon, CheckIcon, WrenchIcon } from "lucide-react";
 import { DEMOS } from "./demos";
 import { PromptLauncher } from "./_components/PromptLauncher";
 
 const REPO = "https://github.com/francotechadmin/ai-sandbox";
 const delay = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
+
+// A small, static picture of the chat UI for the demo card. Shapes only; it
+// makes no claims about real output.
+function AssistantPreview() {
+  return (
+    <div
+      className="relative flex h-52 items-center justify-center overflow-hidden bg-cover bg-[position:75%_35%] sm:h-60"
+      style={{ backgroundImage: "url(/hero-flow.svg)" }}
+      aria-hidden
+    >
+      <div className="absolute inset-0 bg-void/45" />
+      <div className="relative flex w-[78%] max-w-sm flex-col gap-2.5 rounded-2xl border border-white/10 bg-void/75 p-4 backdrop-blur-md transition-transform duration-500 group-hover:-translate-y-1">
+        <div className="ms-auto h-7 w-3/5 rounded-full bg-white/12" />
+        <div className="flex items-center gap-2 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-bone/60">
+          <BrainIcon className="size-3.5" />
+          Reasoning
+        </div>
+        <div className="flex items-center gap-2 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-bone/60">
+          <WrenchIcon className="size-3.5" />
+          <span className="font-mono text-[#7db3d8]">get_weather</span>
+          <CheckIcon className="ms-auto size-3.5 text-green" />
+        </div>
+        <div className="h-2 w-full rounded-full bg-white/15" />
+        <div className="h-2 w-4/5 rounded-full bg-white/15" />
+        <div className="h-2 w-2/5 rounded-full bg-white/10" />
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage() {
   return (
@@ -56,33 +85,42 @@ export default function HomePage() {
         <h2 id="demos-heading" className="font-display text-3xl font-medium tracking-[-0.03em] sm:text-4xl">
           Demos
         </h2>
-        <ul className="mt-8 border-t border-white/15">
+        <ul className="mt-8 grid gap-5 md:grid-cols-2">
           {DEMOS.map((demo) => (
-            <li key={demo.slug} className="border-b border-white/10">
+            <li key={demo.slug}>
               <Link
                 href={`/${demo.slug}`}
-                className="group -mx-3 flex items-start gap-6 rounded-lg px-3 py-8 transition-colors hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-bone sm:-mx-4 sm:px-4"
+                className="group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition-colors hover:border-white/25 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bone"
               >
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display text-3xl font-medium tracking-[-0.04em] sm:text-5xl">{demo.name}</span>
-                  <span className="mt-3 block max-w-[38rem] text-base leading-relaxed text-bone/65">
-                    {demo.description}
-                  </span>
-                  <span className="mt-4 inline-flex items-center gap-2 text-sm text-bone/80">
+                <AssistantPreview />
+                <div className="flex flex-1 flex-col p-6 sm:p-7">
+                  <div className="flex items-start justify-between gap-4">
+                    <h3 className="font-display text-2xl font-medium tracking-[-0.03em] sm:text-3xl">{demo.name}</h3>
+                    <ArrowUpRightIcon
+                      className="mt-1 size-6 shrink-0 text-bone/50 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-bone"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                  <p className="mt-3 text-[15px] leading-relaxed text-bone/65">{demo.description}</p>
+                  <span className="mt-6 inline-flex items-center gap-2 text-sm text-bone/80">
                     <span
                       className={`size-2 rounded-full ${demo.status === "live" ? "bg-green shadow-[0_0_10px_var(--color-green)]" : "bg-amber shadow-[0_0_10px_var(--color-amber)]"}`}
                       aria-hidden
                     />
                     {demo.status === "live" ? "Live" : "In progress"}
                   </span>
-                </span>
-                <ArrowUpRightIcon
-                  className="mt-3 size-8 shrink-0 text-bone/50 transition-all group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-bone sm:size-11"
-                  strokeWidth={1.25}
-                />
+                </div>
               </Link>
             </li>
           ))}
+          <li className="hidden md:block">
+            <div className="flex h-full min-h-72 flex-col items-start justify-end rounded-3xl border border-dashed border-white/15 p-7">
+              <h3 className="font-display text-2xl font-medium tracking-[-0.03em] text-bone/70 sm:text-3xl">More soon</h3>
+              <p className="mt-3 max-w-xs text-[15px] leading-relaxed text-bone/45">
+                Each new demo ships as a working build and shows up here.
+              </p>
+            </div>
+          </li>
         </ul>
         <footer className="mt-16 text-sm text-bone/45">Built by Gabriel Franco with Next.js, FastAPI and LangChain.</footer>
       </section>
