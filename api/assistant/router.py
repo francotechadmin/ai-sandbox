@@ -20,7 +20,7 @@ from assistant_stream.modules.langgraph import append_langgraph_event
 from assistant_stream.serialization import AssistantTransportResponse
 from fastapi import APIRouter, HTTPException
 from langchain.agents import create_agent
-from langchain_core.messages import AIMessageChunk, BaseMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field, field_validator
 
 from . import registry
@@ -77,12 +77,6 @@ def _user_text(command: dict[str, Any]) -> str:
     return "\n".join(p["text"] for p in message.get("parts", []) if p.get("type") == "text" and p.get("text")).strip()
 
 
-def _is_usage_only(message: BaseMessage) -> bool:
-    # Anthropic ends each reply with a chunk that carries only token usage and
-    # no message id, which would otherwise show up as an empty extra message.
-    return isinstance(message, AIMessageChunk) and not message.content and not message.tool_call_chunks
-
-
 @router.post("/chat")
 async def chat(req: ChatRequest):
     user_messages = [
@@ -114,8 +108,6 @@ async def chat(req: ChatRequest):
             ):
                 if controller.is_cancelled:
                     break
-                if event_type == "messages" and _is_usage_only(chunk[0]):
-                    continue
                 append_langgraph_event(controller.state, namespace, event_type, chunk)
         except registry.ModelConfigError as err:
             controller.add_error(str(err))

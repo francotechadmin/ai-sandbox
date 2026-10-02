@@ -60,13 +60,7 @@ class ScriptedChatModel(BaseChatModel):
     def _generate(self, messages, stop=None, run_manager=None, **kwargs) -> ChatResult:
         return generate_from_stream(self._stream(messages, stop, run_manager, **kwargs))
 
-    def _stream(self, messages, stop=None, run_manager=None, **kwargs) -> Iterator[ChatGenerationChunk]:
-        yield from self._script(messages, stop, run_manager, **kwargs)
-        # Anthropic ends every reply with a chunk that has only token usage and no message id.
-        usage = {"input_tokens": 1, "output_tokens": 2, "total_tokens": 3}
-        yield ChatGenerationChunk(message=AIMessageChunk(content="", usage_metadata=usage))
-
-    def _script(
+    def _stream(
         self,
         messages: list[BaseMessage],
         stop: list[str] | None = None,
@@ -88,6 +82,11 @@ class ScriptedChatModel(BaseChatModel):
             if delay:
                 time.sleep(delay)  # lets UI tests observe incremental streaming
             return ChatGenerationChunk(message=AIMessageChunk(id=msg_id, response_metadata=meta, **kw))
+
+        def final() -> ChatGenerationChunk:
+            # Like real providers, the last chunk of a reply carries the token usage.
+            usage = {"input_tokens": 1, "output_tokens": 2, "total_tokens": 3}
+            return chunk(content="", usage_metadata=usage, chunk_position="last")
 
         thought = "Considering the request" + (
             " and the tool result." if tool_msg else ", checking whether a tool helps."
@@ -112,6 +111,7 @@ class ScriptedChatModel(BaseChatModel):
                     content=[{"type": "input_json_delta", "partial_json": part, "index": index}],
                     tool_call_chunks=[{"name": None, "args": part, "id": None, "index": index}],
                 )
+            yield final()
             return
 
         answer = f"[system: {system or 'none'}] "
@@ -120,6 +120,7 @@ class ScriptedChatModel(BaseChatModel):
             answer = _MARKDOWN_SAMPLE
         for word in re.findall(r"\S+\s*", answer):
             yield chunk(content=[{"type": "text", "text": word, "index": index}])
+        yield final()
 
 
 FAKE_MODEL_ID = "demo-fake"

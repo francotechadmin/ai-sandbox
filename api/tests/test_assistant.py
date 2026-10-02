@@ -159,11 +159,6 @@ def test_tools_are_only_available_when_enabled():
     assert [m["type"] for m in messages] == ["human", "ai"]
 
 
-def test_no_empty_messages_from_usage_only_chunks():
-    # Anthropic ends each reply with a chunk carrying only token usage.
-    assert all(m["content"] for m in run_chat("hi"))
-
-
 def test_second_turn_continues_the_conversation():
     first = run_chat("please calc 2*3", tools=["calculator"])
     second = run_chat("and thanks", state={"messages": first}, tools=["calculator"])

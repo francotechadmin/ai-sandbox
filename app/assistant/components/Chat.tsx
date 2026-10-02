@@ -1,10 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AssistantRuntimeProvider, useAssistantTransportRuntime } from "@assistant-ui/react";
+import {
+  AssistantRuntimeProvider,
+  AuiConfig,
+  Suggestions,
+  useAssistantTransportRuntime,
+  useAuiState,
+} from "@assistant-ui/react";
+import { Thread } from "@/components/assistant-ui/elements/thread.aui";
 import { convertState, humanMessages } from "../lib/convert";
+import { STARTERS } from "../lib/starters";
 import type { ChatState, Settings } from "../lib/types";
-import { Thread } from "./Thread";
+
+const config = AuiConfig({
+  suggestions: Suggestions(STARTERS.map((prompt) => ({ title: prompt, label: "", prompt }))),
+});
+
+// Sending on a touch device closes the on-screen keyboard so the reply is visible.
+function DismissKeyboardOnSend() {
+  const running = useAuiState((s) => s.thread.isRunning);
+  useEffect(() => {
+    if (running && window.matchMedia("(pointer: coarse)").matches) (document.activeElement as HTMLElement | null)?.blur();
+  }, [running]);
+  return null;
+}
 
 export function Chat({ settings }: { settings: Settings }) {
   // The runtime is created once; the latest settings are read per request.
@@ -12,6 +32,7 @@ export function Chat({ settings }: { settings: Settings }) {
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
+
   const [error, setError] = useState<string | null>(null);
 
   const runtime = useAssistantTransportRuntime<ChatState>({
@@ -20,9 +41,9 @@ export function Chat({ settings }: { settings: Settings }) {
     api: "/api/assistant/chat",
     headers: {}, // required by the options type
     body: async () => ({ settings: settingsRef.current }),
-    converter: convertState,
+    converter: (state, meta) => convertState(state, meta, error),
     onResponse: () => setError(null),
-    // Keep what the user typed and show why the request failed.
+    // Show why the request failed and keep what the user typed.
     onError: (err, { commands, updateState }) => {
       setError(err.message);
       updateState((state) => ({ messages: [...state.messages, ...humanMessages(commands)] }));
@@ -30,8 +51,9 @@ export function Chat({ settings }: { settings: Settings }) {
   });
 
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      <Thread error={error} />
+    <AssistantRuntimeProvider runtime={runtime} config={config}>
+      <DismissKeyboardOnSend />
+      <Thread />
     </AssistantRuntimeProvider>
   );
 }

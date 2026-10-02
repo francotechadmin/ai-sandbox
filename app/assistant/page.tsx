@@ -56,7 +56,7 @@ export default function AssistantPage() {
           {loadError}
         </div>
       ) : !config || !settings ? (
-        <div className="m-6 text-sm text-muted">Loading…</div>
+        <div className="m-6 text-sm text-muted-foreground">Loading…</div>
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_340px]">
           <main className="relative isolate min-h-0 overflow-hidden">

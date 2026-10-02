@@ -74,7 +74,7 @@ export function SettingsPanel({
             />
             <span>
               <span className="font-mono text-[12px]">{t.name}</span>
-              <span className="mt-0.5 block text-[12px] leading-snug text-muted">{t.description}</span>
+              <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">{t.description}</span>
             </span>
           </label>
         ))}
@@ -85,7 +85,7 @@ export function SettingsPanel({
           <label className={label} htmlFor="system-prompt">System prompt</label>
           <button
             onClick={() => onChange({ ...settings, systemPrompt: config.defaultSystemPrompt })}
-            className="text-[12px] text-muted underline underline-offset-2 hover:text-text"
+            className="text-[12px] text-muted-foreground underline underline-offset-2 hover:text-text"
           >
             Reset
           </button>
@@ -97,7 +97,7 @@ export function SettingsPanel({
           placeholder="No system prompt — the model gets only your messages."
           className="min-h-[140px] flex-1 resize-none rounded-xl border border-line bg-panel2 px-3 py-2.5 text-base leading-relaxed outline-hidden transition-colors focus:border-white/30 lg:text-[14px]"
         />
-        <p className="text-[12px] text-muted">Applies to your next message. Stored in this browser only.</p>
+        <p className="text-[12px] text-muted-foreground">Applies to your next message. Stored in this browser only.</p>
       </div>
     </aside>
   );

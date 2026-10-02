@@ -35,9 +35,15 @@ rendered as it happens.
   browser), so there is no custom stream or message conversion code, nothing
   is stored server-side, and it fits a serverless function. The reply streams
   as server-sent events.
-- **UI** — [assistant-ui](https://www.assistant-ui.com) primitives, styled
-  with the sandbox's Tailwind theme; replies are rendered as markdown
-  (Tailwind Typography).
+- **UI** — assistant-ui's own component kit (`thread.aui` and the reasoning,
+  tool-group, markdown and composer elements it uses), copied into
+  `components/`, `hooks/` and `lib/` unmodified apart from two marked
+  `LOCAL EDIT`s in `thread.aui.tsx` (no add-attachment button; keyboard stays
+  closed after sending on touch devices). The kit's theme tokens are mapped to
+  the sandbox palette in `app/globals.css`. Update the kit by re-copying the
+  files from the assistant-ui repo (`packages/ui/src/components/react`), not by
+  editing them; they are excluded from lint. Refresh and Edit show as disabled
+  because this stateless backend has no regenerate or edit.
 
 ## Tools
 
