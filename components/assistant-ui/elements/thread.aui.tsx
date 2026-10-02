@@ -198,7 +198,7 @@ const ThreadRoot: FC<{ isEmpty: boolean; autoFocus: boolean }> = ({
       }}
     >
       <ThreadPrimitive.Viewport
-        turnAnchor="top"
+        turnAnchor="bottom" // LOCAL EDIT (3/3): classic chat scrolling; the kit default "top" pins each new message to the top of the page
         data-slot="aui_thread-viewport"
         className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
       >
@@ -416,7 +416,7 @@ const ThreadSuggestionItem: FC = () => {
   );
 };
 
-// LOCAL EDIT (1/2): keep the on-screen keyboard closed after sending on touch devices.
+// LOCAL EDIT (1/3): keep the on-screen keyboard closed after sending on touch devices.
 const isTouchDevice = () =>
   typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
@@ -456,7 +456,7 @@ const ComposerAction: FC = () => {
 
   return (
     <div className="aui-composer-action-wrapper relative flex items-center justify-between">
-      {/* LOCAL EDIT (2/2): no attachment support in this app, so no add-attachment button. */}
+      {/* LOCAL EDIT (2/3): no attachment support in this app, so no add-attachment button. */}
       <span />
       <div className="flex items-center gap-1.5">
         <AuiIf condition={(s) => s.thread.capabilities.dictation}>

@@ -37,9 +37,11 @@ rendered as it happens.
   as server-sent events.
 - **UI** — assistant-ui's own component kit (`thread.aui` and the reasoning,
   tool-group, markdown and composer elements it uses), copied into
-  `components/`, `hooks/` and `lib/` unmodified apart from two marked
+  `components/`, `hooks/` and `lib/` unmodified apart from three marked
   `LOCAL EDIT`s in `thread.aui.tsx` (no add-attachment button; keyboard stays
-  closed after sending on touch devices). The kit's theme tokens are mapped to
+  closed after sending on touch devices; classic bottom-anchored scrolling
+  instead of the kit's "pin each new message to the top"). Reasoning uses the
+  kit's borderless `ghost` variant, set from `Chat.tsx`. The kit's theme tokens are mapped to
   the sandbox palette in `app/globals.css`. Update the kit by re-copying the
   files from the assistant-ui repo (`packages/ui/src/components/react`), not by
   editing them; they are excluded from lint. Refresh and Edit show as disabled

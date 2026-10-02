@@ -8,7 +8,13 @@ import {
   useAssistantTransportRuntime,
   useAuiState,
 } from "@assistant-ui/react";
-import { Thread } from "@/components/assistant-ui/elements/thread.aui";
+import {
+  ReasoningContent,
+  ReasoningRoot,
+  ReasoningText,
+  ReasoningTrigger,
+} from "@/components/assistant-ui/elements/reasoning.aui";
+import { Thread, type ThreadComponents } from "@/components/assistant-ui/elements/thread.aui";
 import { convertState, humanMessages } from "../lib/convert";
 import { STARTERS } from "../lib/starters";
 import type { ChatState, Settings } from "../lib/types";
@@ -16,6 +22,21 @@ import type { ChatState, Settings } from "../lib/types";
 const config = AuiConfig({
   suggestions: Suggestions(STARTERS.map((prompt) => ({ title: prompt, label: "", prompt }))),
 });
+
+// The kit's own reasoning group, using its borderless "ghost" variant.
+const components: ThreadComponents = {
+  ReasoningGroup: ({ group, children }) => {
+    const running = group.status.type === "running";
+    return (
+      <ReasoningRoot variant="ghost" streaming={running}>
+        <ReasoningTrigger active={running} />
+        <ReasoningContent aria-busy={running}>
+          <ReasoningText>{children}</ReasoningText>
+        </ReasoningContent>
+      </ReasoningRoot>
+    );
+  },
+};
 
 // Sending on a touch device closes the on-screen keyboard so the reply is visible.
 function DismissKeyboardOnSend() {
@@ -53,7 +74,7 @@ export function Chat({ settings }: { settings: Settings }) {
   return (
     <AssistantRuntimeProvider runtime={runtime} config={config}>
       <DismissKeyboardOnSend />
-      <Thread />
+      <Thread components={components} />
     </AssistantRuntimeProvider>
   );
 }
