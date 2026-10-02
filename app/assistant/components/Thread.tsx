@@ -91,7 +91,7 @@ function Composer() {
   );
 }
 
-export function Thread() {
+export function Thread({ error }: { error: string | null }) {
   return (
     <ThreadPrimitive.Root className="flex h-full min-h-0 flex-col">
       <ThreadPrimitive.Viewport className="flex flex-1 flex-col overflow-y-auto scroll-smooth px-3 pt-4 sm:px-5 sm:pt-6">
@@ -102,6 +102,15 @@ export function Thread() {
           <ThreadPrimitive.Messages>
             {({ message }) => (message.role === "user" ? <UserMessage /> : <AssistantMessage />)}
           </ThreadPrimitive.Messages>
+          {error && (
+            <div
+              role="alert"
+              className="rounded-lg border border-danger-line bg-danger-bg px-3 py-2 text-[13px] text-red"
+              data-testid="message-error"
+            >
+              {error}
+            </div>
+          )}
         </div>
 
         <div className="sticky bottom-0 mx-auto mt-4 flex w-full max-w-[44rem] flex-col gap-3 bg-bg pb-4">

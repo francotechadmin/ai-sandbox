@@ -3,7 +3,6 @@
 import {
   ActionBarPrimitive,
   AuiIf,
-  ErrorPrimitive,
   MessagePrimitive,
 } from "@assistant-ui/react";
 import { CheckIcon, CopyIcon } from "lucide-react";
@@ -31,14 +30,6 @@ export function AssistantMessage() {
             tools: { Fallback: ToolCallPart },
           }}
         />
-        <MessagePrimitive.Error>
-          <div
-            className="mt-2 rounded-lg border border-danger-line bg-danger-bg px-3 py-2 text-[13px] text-red"
-            data-testid="message-error"
-          >
-            <ErrorPrimitive.Message />
-          </div>
-        </MessagePrimitive.Error>
       </div>
       <ActionBarPrimitive.Root hideWhenRunning autohide="not-last" className="-ms-1 mt-1 flex gap-1 text-muted">
         <ActionBarPrimitive.Copy asChild>

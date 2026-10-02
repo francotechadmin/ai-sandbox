@@ -22,16 +22,19 @@ rendered as it happens.
   newer, which reject `budget_tokens`), and OpenAI reasoning effort plus
   streamed summaries via the Responses API. A test builds a request for every
   configured Anthropic model so a model that rejects its parameters fails in
-  CI. Provider differences are normalised in `api/assistant/stream.py`, so the
-  UI only ever receives reasoning / text / tool-call parts.
+  CI.
 - **No hardcoded prompts** — the system prompt, model and
   enabled tools are sent with every request from the settings panel. The only
   prompt text in the repo is the editable starting value in
   `api/assistant/config/default_system_prompt.md`; "Reset" restores it.
   Settings are stored in the browser (`localStorage`).
-- **Stateless backend** — the whole conversation lives in the browser and is
-  sent back each turn (assistant-ui's "Assistant Transport"), so nothing is
-  stored server-side and it fits a serverless function.
+- **Stateless backend, library-native state** — the whole conversation lives
+  in the browser as LangChain messages and is sent back each turn
+  (assistant-ui's "Assistant Transport" with its LangGraph helpers:
+  `append_langgraph_event` on the server, `convertLangChainMessages` in the
+  browser), so there is no custom stream or message conversion code, nothing
+  is stored server-side, and it fits a serverless function. The reply streams
+  as server-sent events.
 - **UI** — [assistant-ui](https://www.assistant-ui.com) primitives, styled
   with the sandbox's Tailwind theme; replies are rendered as markdown
   (Tailwind Typography).

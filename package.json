@@ -11,11 +11,11 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@assistant-ui/react": "^0.15.22",
-    "@assistant-ui/react-markdown": "^0.14.17",
+    "@assistant-ui/react": "^0.15.23",
+    "@assistant-ui/react-langgraph": "^0.14.31",
+    "@assistant-ui/react-markdown": "^0.14.18",
     "@fontsource-variable/geist": "^5.3.0",
     "@tailwindcss/typography": "^0.5.20",
-    "assistant-stream": "^0.3.45",
     "clsx": "^2.1.1",
     "lucide-react": "^1.49.0",
     "next": "^16.3.8",

@@ -1,32 +1,9 @@
-// Shapes shared between the assistant backend (api/assistant) and this page.
+import type { LangChainMessage } from "@assistant-ui/react-langgraph";
 
-import type { ReadonlyJSONObject } from "assistant-stream/utils";
-
-type StatePart =
-  | { type: "reasoning"; step: number; text: string }
-  | { type: "text"; step: number; text: string }
-  | {
-      type: "tool-call";
-      step: number;
-      toolCallId: string;
-      toolName: string;
-      args: ReadonlyJSONObject;
-      status: "running" | "complete" | "error";
-      result: string | null;
-    };
-
-export type StateMessage =
-  | { id: string; role: "user"; text: string }
-  | {
-      id: string;
-      role: "assistant";
-      status: "running" | "complete" | "cancelled" | "error";
-      parts: StatePart[];
-      error?: string;
-    };
-
-// The whole chat lives in the browser and is sent back with every request.
-export type ChatState = { messages: StateMessage[] };
+// The whole chat is LangChain's own message list (assistant-ui's LangGraph
+// transport pattern). It lives in the browser and is sent back with every
+// request, so the backend stays stateless.
+export type ChatState = { messages: LangChainMessage[] };
 
 type ModelInfo = {
   id: string;

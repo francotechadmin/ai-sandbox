@@ -7,6 +7,7 @@ import json
 import os
 import re
 import time
+import uuid
 from collections.abc import Iterator
 from typing import Any
 
@@ -59,7 +60,13 @@ class ScriptedChatModel(BaseChatModel):
     def _generate(self, messages, stop=None, run_manager=None, **kwargs) -> ChatResult:
         return generate_from_stream(self._stream(messages, stop, run_manager, **kwargs))
 
-    def _stream(
+    def _stream(self, messages, stop=None, run_manager=None, **kwargs) -> Iterator[ChatGenerationChunk]:
+        yield from self._script(messages, stop, run_manager, **kwargs)
+        # Anthropic ends every reply with a chunk that has only token usage and no message id.
+        usage = {"input_tokens": 1, "output_tokens": 2, "total_tokens": 3}
+        yield ChatGenerationChunk(message=AIMessageChunk(content="", usage_metadata=usage))
+
+    def _script(
         self,
         messages: list[BaseMessage],
         stop: list[str] | None = None,
@@ -72,7 +79,7 @@ class ScriptedChatModel(BaseChatModel):
         if "boom" in human.lower():
             raise RuntimeError("scripted failure")
         meta = {"model_provider": "anthropic"}
-        msg_id = "run-scripted"
+        msg_id = f"msg_{uuid.uuid4().hex[:8]}"  # each model call gets its own id, as with real providers
         index = 0
 
         delay = float(os.environ.get("ASSISTANT_FAKE_DELAY", "0"))

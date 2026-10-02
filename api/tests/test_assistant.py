@@ -2,10 +2,9 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import HumanMessage
 
 from api.assistant import registry, router
-from api.assistant.history import state_to_messages
 from api.index import app
 
 
@@ -37,26 +36,34 @@ def apply_ops(state, ops):
     return state
 
 
-def run_chat(text, *, state=None, **settings):
+def chat_events(text, *, state=None, **settings):
+    """POST one user message; returns the sent state and the SSE events."""
     body = {
         "state": state or {"messages": []},
-        "commands": [
-            {
-                "type": "add-message",
-                "message": {"role": "user", "parts": [{"type": "text", "text": text}]},
-                "parentId": None,
-                "sourceId": None,
-            }
-        ],
+        "commands": [{"type": "add-message", "message": {"role": "user", "parts": [{"type": "text", "text": text}]}}],
         "settings": {"model": "demo-fake", **settings},
     }
     resp = client.post("/api/assistant/chat", json=body)
     assert resp.status_code == 200, resp.text
-    final = json.loads(json.dumps(body["state"]))
-    for line in resp.text.splitlines():
-        if line.startswith("aui-state:"):
-            apply_ops(final, json.loads(line[len("aui-state:") :]))
-    return final
+    events = [json.loads(line[len("data: ") :]) for line in resp.text.splitlines() if line.startswith("data: {")]
+    return body["state"], events
+
+
+def run_chat(text, *, state=None, **settings):
+    """The chat state (LangChain messages) the browser ends up with after one turn."""
+    final, events = chat_events(text, state=json.loads(json.dumps(state or {"messages": []})), **settings)
+    for event in events:
+        if event["type"] == "update-state":
+            apply_ops(final, event["operations"])
+    return final["messages"]
+
+
+def block_types(message):
+    return [block["type"] for block in message["content"]]
+
+
+def text_of(message):
+    return "".join(block.get("text", "") for block in message["content"] if block["type"] == "text")
 
 
 # -- registry ----------------------------------------------------------------
@@ -128,59 +135,57 @@ def test_config_lists_models_tools_and_default_prompt():
 
 # -- chat endpoint -----------------------------------------------------------
 def test_system_prompt_comes_from_the_request_and_nothing_is_injected():
-    with_prompt = run_chat("hi", systemPrompt="Be terse.")
-    assert "[system: Be terse.]" in with_prompt["messages"][-1]["parts"][-1]["text"]
-    without = run_chat("hi", systemPrompt="   ")
-    assert "[system: none]" in without["messages"][-1]["parts"][-1]["text"]
+    assert "[system: Be terse.]" in text_of(run_chat("hi", systemPrompt="Be terse.")[-1])
+    assert "[system: none]" in text_of(run_chat("hi", systemPrompt="   ")[-1])
 
 
 def test_reasoning_is_streamed_before_the_answer():
-    parts = run_chat("hi")["messages"][-1]["parts"]
-    assert [p["type"] for p in parts] == ["reasoning", "text"]
+    human, ai = run_chat("hi")
+    assert human["type"] == "human" and ai["type"] == "ai"
+    assert block_types(ai) == ["thinking", "text"]
 
 
 def test_tool_call_is_streamed_and_resolved():
-    state = run_chat("please calc 12*(3+4)", tools=["calculator"])
-    user, assistant = state["messages"]
-    assert user["role"] == "user" and assistant["status"] == "complete"
-    types = [p["type"] for p in assistant["parts"]]
-    assert types == ["reasoning", "tool-call", "reasoning", "text"]
-    call = assistant["parts"][1]
-    assert call["toolName"] == "calculator"
-    assert call["args"] == {"expression": "12*(3+4)"}
-    assert call["result"] == "84" and call["status"] == "complete"
-    assert "84" in assistant["parts"][-1]["text"]
-    # steps are one-per-model-call, not inflated by trailing chunks
-    assert [p["step"] for p in assistant["parts"]] == [0, 0, 1, 1]
+    human, call, result, answer = run_chat("please calc 12*(3+4)", tools=["calculator"])
+    assert [m["type"] for m in (human, call, result, answer)] == ["human", "ai", "tool", "ai"]
+    assert call["tool_calls"][0]["name"] == "calculator"
+    assert call["tool_calls"][0]["args"] == {"expression": "12*(3+4)"}
+    assert result["content"] == "84" and result["tool_call_id"] == call["tool_calls"][0]["id"]
+    assert "84" in text_of(answer)
 
 
 def test_tools_are_only_available_when_enabled():
-    state = run_chat("please calc 1+1", tools=[])
-    types = [p["type"] for p in state["messages"][-1]["parts"]]
-    assert "tool-call" not in types and types[-1] == "text"
+    messages = run_chat("please calc 1+1", tools=[])
+    assert [m["type"] for m in messages] == ["human", "ai"]
+
+
+def test_no_empty_messages_from_usage_only_chunks():
+    # Anthropic ends each reply with a chunk carrying only token usage.
+    assert all(m["content"] for m in run_chat("hi"))
 
 
 def test_second_turn_continues_the_conversation():
     first = run_chat("please calc 2*3", tools=["calculator"])
-    second = run_chat("and thanks", state=first, tools=["calculator"])
-    roles = [m["role"] for m in second["messages"]]
-    assert roles == ["user", "assistant", "user", "assistant"]
-    assert second["messages"][-1]["status"] == "complete"
+    second = run_chat("and thanks", state={"messages": first}, tools=["calculator"])
+    assert [m["type"] for m in second] == ["human", "ai", "tool", "ai", "human", "ai"]
 
 
-def test_model_failure_is_reported_on_the_message_not_swallowed():
-    assistant = run_chat("boom")["messages"][-1]
-    assert assistant["status"] == "error"
-    assert "scripted failure" in assistant["error"]
+def errors(text, **settings):
+    _, events = chat_events(text, **settings)
+    return [e["error"] for e in events if e["type"] == "error"]
+
+
+def test_model_failure_is_sent_as_a_stream_error():
+    assert errors("boom") == ["RuntimeError: scripted failure"]
 
 
 @pytest.mark.parametrize(
     "model,fragment",
     [("nope", "Unknown model"), ("claude-haiku-4-5", "ANTHROPIC_API_KEY")],
 )
-def test_unusable_models_are_reported_on_the_message(model, fragment):
-    assistant = run_chat("hi", model=model)["messages"][-1]
-    assert assistant["status"] == "error" and fragment in assistant["error"]
+def test_unusable_models_are_sent_as_a_stream_error(model, fragment):
+    (error,) = errors("hi", model=model)
+    assert fragment in error
 
 
 def post_chat(text="hi", **body):
@@ -203,61 +208,6 @@ def test_request_without_a_user_message_is_rejected():
 )
 def test_oversized_requests_are_rejected(body):
     assert post_chat(**body).status_code == 422
-
-
-# -- history -----------------------------------------------------------------
-def test_state_to_messages_replays_tool_loops_and_drops_reasoning():
-    state = {
-        "messages": [
-            {"id": "1", "role": "user", "text": "calc"},
-            {
-                "id": "2",
-                "role": "assistant",
-                "status": "complete",
-                "parts": [
-                    {"type": "reasoning", "step": 0, "text": "hmm"},
-                    {
-                        "type": "tool-call",
-                        "step": 0,
-                        "toolCallId": "c1",
-                        "toolName": "calculator",
-                        "args": {"expression": "1+1"},
-                        "status": "complete",
-                        "result": "2",
-                    },
-                    {"type": "text", "step": 1, "text": "It is 2."},
-                ],
-            },
-        ]
-    }
-    msgs = state_to_messages(state)
-    assert [type(m) for m in msgs] == [HumanMessage, AIMessage, ToolMessage, AIMessage]
-    assert msgs[1].tool_calls[0]["id"] == "c1" and msgs[2].tool_call_id == "c1"
-    assert msgs[3].content == "It is 2."
-    assert "hmm" not in json.dumps([m.model_dump() for m in msgs])
-
-
-def test_interrupted_tool_call_still_gets_a_tool_message():
-    state = {
-        "messages": [
-            {
-                "id": "2",
-                "role": "assistant",
-                "parts": [
-                    {
-                        "type": "tool-call",
-                        "step": 0,
-                        "toolCallId": "c1",
-                        "toolName": "calculator",
-                        "args": {},
-                        "result": None,
-                    }
-                ],
-            }
-        ]
-    }
-    msgs = state_to_messages(state)
-    assert isinstance(msgs[-1], ToolMessage) and "did not complete" in msgs[-1].content
 
 
 # -- tools -------------------------------------------------------------------
