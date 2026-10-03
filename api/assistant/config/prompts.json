@@ -1,0 +1,115 @@
+{
+  "restrict": true,
+  "placeholder": "Input disabled due to token shortage.",
+  "endNote": "And that's a wrap. Start a new chat to try another topic.",
+  "prompts": [
+    {
+      "title": "Check the weather",
+      "label": "in Houston right now",
+      "prompt": "What's the weather in Houston right now?",
+      "followUps": [
+        {
+          "title": "Compare with Paris",
+          "prompt": "How does that compare to Paris, France?",
+          "followUps": [
+            {
+              "title": "Pack for both",
+              "prompt": "What should I pack for a weekend in each?"
+            }
+          ]
+        },
+        {
+          "title": "In Celsius",
+          "prompt": "Give me that in Celsius.",
+          "followUps": [
+            {
+              "title": "Jacket weather?",
+              "prompt": "Do I need a jacket tonight in Houston?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Plan a migration",
+      "label": "of a Postgres database",
+      "prompt": "Walk me through a plan to migrate a Postgres database.",
+      "followUps": [
+        {
+          "title": "Cut the downtime",
+          "prompt": "How do I keep downtime close to zero?",
+          "followUps": [
+            {
+              "title": "Plan the rollback",
+              "prompt": "What's the rollback plan if it goes wrong?"
+            }
+          ]
+        },
+        {
+          "title": "Check the data",
+          "prompt": "How do I verify the data matches afterward?",
+          "followUps": [
+            {
+              "title": "Make a checklist",
+              "prompt": "Turn that into a short go-live checklist."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Explain reasoning models",
+      "label": "versus regular ones",
+      "prompt": "Explain how reasoning models differ from regular ones.",
+      "followUps": [
+        {
+          "title": "Is it worth the cost?",
+          "prompt": "When is the extra cost of reasoning worth it?",
+          "followUps": [
+            {
+              "title": "Show an example",
+              "prompt": "Give one concrete example where reasoning clearly wins."
+            }
+          ]
+        },
+        {
+          "title": "Why does it help?",
+          "prompt": "Why does thinking before answering help?",
+          "followUps": [
+            {
+              "title": "Keep it short",
+              "prompt": "Summarize that in two sentences."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Do some math",
+      "label": "with the calculator",
+      "prompt": "What's an 18% tip on $86.40, split three ways? Use the calculator.",
+      "followUps": [
+        {
+          "title": "Try 20% instead",
+          "prompt": "Redo it at 20%.",
+          "followUps": [
+            {
+              "title": "Round it up",
+              "prompt": "What if everyone rounds up to the next dollar?"
+            }
+          ]
+        },
+        {
+          "title": "Add a fourth person",
+          "prompt": "What if a fourth person joins?",
+          "followUps": [
+            {
+              "title": "Time for dinner?",
+              "prompt": "What time is it in Houston right now? Use the time tool."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
