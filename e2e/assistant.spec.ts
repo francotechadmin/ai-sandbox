@@ -105,22 +105,35 @@ test("the system prompt persists across reloads; new chat and reset work", async
   await expect(page.locator("#system-prompt")).toHaveValue(/helpful assistant/);
 });
 
-test("when restricted, the input bar is locked and only the listed prompts can be sent", async ({ page }) => {
+test("when restricted, the input bar is locked and conversations walk down the prompt trees", async ({ page }) => {
   await page.route("**/api/assistant/config", async (route) => {
     const response = await route.fetch();
     await route.fulfill({ response, json: { ...(await response.json()), restrictPrompts: true } });
   });
   await page.reload();
   await expect(composer(page)).toBeDisabled();
-  await expect(composer(page)).toHaveAttribute("placeholder", "Choose a prompt below");
+  await expect(composer(page)).toHaveAttribute("placeholder", /Nice try/);
 
-  await page.getByRole("button", { name: /Do some math/ }).click();
+  const chip = (name: string | RegExp) => page.getByRole("button", { name });
+  await chip(/Do some math/).click();
   await expect(userMessages(page).first()).toContainText("18% tip");
   await idle(page);
 
-  // The same prompts stay on offer for follow-ups; the input stays locked.
-  await expect(page.getByRole("button", { name: /Check the weather/ })).toBeVisible();
+  // Only the follow-ups of the last prompt are offered; the input stays locked.
+  await expect(chip("Try 20% instead")).toBeVisible();
+  await expect(chip(/Check the weather/)).toHaveCount(0);
+  await chip("Add a fourth person").click();
+  await expect(userMessages(page).nth(1)).toContainText("fourth person");
+  await idle(page);
+  await chip("Time for dinner?").click();
+  await idle(page);
   await expect(composer(page)).toBeDisabled();
+
+  // The conversation has ended: a note and a way to start over.
+  await expect(page.getByText("And that's a wrap.")).toBeVisible();
+  await chip("Start a new chat").click();
+  await expect(userMessages(page)).toHaveCount(0);
+  await expect(chip(/Check the weather/)).toBeVisible();
 });
 
 test("the landing page links to the assistant", async ({ page }) => {

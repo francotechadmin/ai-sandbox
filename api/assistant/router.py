@@ -6,7 +6,7 @@
 #                               "data stream" transport; chat state lives in
 #                               the browser and is sent back every request)
 #
-# Messages must match config/prompts.json unless the restriction is off (see
+# The conversation must follow a tree in config/prompts.json unless the restriction is off (see
 # prompts.py). Nothing here injects a prompt: the system prompt, model and enabled tools
 # all come from the request. The chat state is a list of LangChain messages
 # (assistant-ui's LangGraph transport pattern); failures after the request is
@@ -75,7 +75,7 @@ def get_config() -> dict[str, Any]:
         ],
         "tools": describe_tools(),
         "restrictPrompts": prompts.restricted(),
-        "prompts": [p.model_dump() for p in prompts.list_prompts()],
+        **prompts.get_config().model_dump(exclude={"restrict"}),
     }
 
 
@@ -109,8 +109,8 @@ async def chat(req: ChatRequest):
     state = req.state or {}
     # The history comes from the browser too, so it is checked the same way.
     sent = [*_human_texts(state.get("messages", [])), *(m.text for m in user_messages)]
-    if not all(prompts.is_allowed(text) for text in sent):
-        raise HTTPException(status_code=400, detail="Only the suggested prompts can be sent.")
+    if not prompts.allows(sent):
+        raise HTTPException(status_code=400, detail="Only the suggested prompts can be sent, in order.")
     history = copy.deepcopy(state.get("messages", []))  # the run mutates the shared state below
     system_prompt = req.settings.systemPrompt.strip()
 

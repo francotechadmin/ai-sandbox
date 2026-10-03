@@ -12,15 +12,18 @@ type ModelInfo = {
   available: boolean;
 };
 
-export type PromptInfo = { title: string; label: string; prompt: string };
+// A prompt users may send, with the follow-ups that can come after it.
+export type PromptInfo = { title: string; label?: string; prompt: string; followUps?: PromptInfo[] };
 
 export type AssistantConfig = {
   defaultModel: string;
   defaultSystemPrompt: string;
   models: ModelInfo[];
   tools: { name: string; description: string }[];
-  // The prompts users may send; when restricted, the input bar is locked to them.
+  // When restricted, the input bar is locked and users walk down these prompt trees.
   restrictPrompts: boolean;
+  placeholder: string; // shown in the locked input bar
+  endNote: string; // shown when a conversation has run out of follow-ups
   prompts: PromptInfo[];
 };
 

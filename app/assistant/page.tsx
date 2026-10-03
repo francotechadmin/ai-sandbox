@@ -66,7 +66,7 @@ export default function AssistantPage() {
               style={{ backgroundImage: "url(/hero-flow.svg)" }}
               aria-hidden
             />
-            <Chat key={chatKey} settings={settings} prompts={config.prompts} locked={config.restrictPrompts} />
+            <Chat key={chatKey} settings={settings} config={config} onNewChat={() => setChatKey((k) => k + 1)} />
           </main>
           <SettingsPanel
             config={config}

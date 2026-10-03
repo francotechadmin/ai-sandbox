@@ -24,13 +24,16 @@ rendered as it happens.
   configured model so a model that rejects its parameters fails in CI.
 - **Locked to predefined prompts** — the chat endpoint spends the server's API
   keys, so users can't type free text. The allowed prompts live in
-  `api/assistant/config/prompts.json`; the UI disables the input bar and shows
-  them as suggestions, and the **server** rejects any message (including ones
-  in the replayed history) that isn't an exact match, so a hand-made request
-  can't get around it. Set `"restrict": false` in that file, or
-  `ASSISTANT_ALLOW_ANY_PROMPT=1` in the environment (used by the tests and
-  handy locally), to allow free text. The landing page's typing animation
-  reads the same file.
+  `api/assistant/config/prompts.json` as conversation trees: a few opening
+  prompts, each with follow-ups, and so on until a conversation ends (then an
+  end note and a "Start a new chat" link appear). The same file holds the
+  funny placeholder shown in the disabled input bar. The UI offers only the
+  next choices; the **server** rejects any conversation that doesn't walk down
+  one of the trees exactly (replayed history included), so a hand-made request
+  can't get around it. Edit the file to change the conversations. Set
+  `"restrict": false` in it, or `ASSISTANT_ALLOW_ANY_PROMPT=1` in the
+  environment (used by the tests and handy locally), to allow free text. The
+  landing page's typing animation reads the same file.
 - **No hardcoded prompts** — the system prompt, model and
   enabled tools are sent with every request from the settings panel. The only
   prompt text in the repo is the editable starting value in
@@ -49,7 +52,7 @@ rendered as it happens.
   `LOCAL EDIT`s in `thread.aui.tsx` (no add-attachment button; keyboard stays
   closed after sending on touch devices; classic bottom-anchored scrolling
   instead of the kit's "pin each new message to the top"; a locked input bar that
-  stays disabled and keeps the prompt list visible after replies). Reasoning uses the
+  stays disabled and offers the next prompts as chips). Reasoning uses the
   kit's borderless `ghost` variant, set from `Chat.tsx`. The kit's theme tokens are mapped to
   the sandbox palette in `app/globals.css`. Update the kit by re-copying the
   files from the assistant-ui repo (`packages/ui/src/components/react`), not by

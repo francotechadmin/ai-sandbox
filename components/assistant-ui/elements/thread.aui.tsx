@@ -67,6 +67,7 @@ import {
   type ComponentType,
   type FC,
   type PropsWithChildren,
+  type ReactNode,
 } from "react";
 
 export type ThreadGroupPart = MessagePrimitive.GroupedParts.GroupPart;
@@ -126,8 +127,19 @@ const taskAwareGroupBy = (
 export type ThreadProps = {
   components?: ThreadComponents | undefined;
   autoFocus?: boolean | undefined;
-  /** LOCAL EDIT (4/4): when set, the input is disabled and shows this text, and the prompts stay available as chips above the composer once the chat has history (they are the only way to send). */
-  lockedPlaceholder?: string | undefined;
+  /**
+   * LOCAL EDIT (4/4): when set, the input bar is locked. It is disabled and
+   * shows `placeholder`; once the chat has history, `choices` are offered as
+   * chips above the composer (the only way to send), or `end` when there are
+   * none left.
+   */
+  locked?: ThreadLock | undefined;
+};
+
+export type ThreadLock = {
+  placeholder: string;
+  choices: readonly { title: string; prompt: string }[];
+  end: ReactNode;
 };
 
 const EMPTY_COMPONENTS: ThreadComponents = {};
@@ -172,7 +184,7 @@ const ThreadHistorySkeleton: FC = () => (
 export const Thread: FC<ThreadProps> = ({
   components = EMPTY_COMPONENTS,
   autoFocus = true,
-  lockedPlaceholder,
+  locked,
 }) => {
   const isEmpty = useAuiState(isNewChatView);
 
@@ -181,7 +193,7 @@ export const Thread: FC<ThreadProps> = ({
       <ThreadRoot
         isEmpty={isEmpty}
         autoFocus={autoFocus}
-        lockedPlaceholder={lockedPlaceholder}
+        locked={locked}
       />
     </ThreadComponentsContext.Provider>
   );
@@ -190,8 +202,8 @@ export const Thread: FC<ThreadProps> = ({
 const ThreadRoot: FC<{
   isEmpty: boolean;
   autoFocus: boolean;
-  lockedPlaceholder: string | undefined;
-}> = ({ isEmpty, autoFocus, lockedPlaceholder }) => {
+  locked: ThreadLock | undefined;
+}> = ({ isEmpty, autoFocus, locked }) => {
   const { Welcome = ThreadWelcome } = useContext(ThreadComponentsContext);
 
   return (
@@ -241,10 +253,10 @@ const ThreadRoot: FC<{
           >
             <ThreadScrollToBottom />
             <ThreadFollowupSuggestions />
-            {lockedPlaceholder !== undefined && <LockedPromptChips />}
+            {locked && <LockedPromptChips locked={locked} />}
             <Composer
               autoFocus={autoFocus}
-              lockedPlaceholder={lockedPlaceholder}
+              locked={locked}
             />
             <AuiIf condition={(s) => isNewChatView(s) && s.composer.isEmpty}>
               <ThreadSuggestions />
@@ -404,24 +416,24 @@ const ThreadSuggestions: FC = () => {
   );
 };
 
-// LOCAL EDIT (4/4, part 2): with the input locked, the configured prompts are the
-// only way to send, so they stay on offer above the composer once the chat has
-// history, as compact chips like the kit's own follow-up suggestions.
-const LockedPromptChips: FC = () => (
+// LOCAL EDIT (4/4, part 2): with the input locked, the next prompts are the only
+// way to send, so they are offered above the composer as compact chips, like
+// the kit's own follow-up suggestions, until the conversation has none left.
+const LockedPromptChips: FC<{ locked: ThreadLock }> = ({ locked }) => (
   <AuiIf condition={(s) => !s.thread.isEmpty && !s.thread.isRunning}>
-    <div className="aui-thread-locked-prompts flex flex-wrap justify-center gap-2">
-      <ThreadPrimitive.Suggestions>
-        {() => (
-          <SuggestionPrimitive.Trigger send asChild>
-            <button
-              type="button"
+    <div className="aui-thread-locked-prompts flex flex-wrap items-center justify-center gap-2">
+      {locked.choices.length === 0
+        ? locked.end
+        : locked.choices.map((choice) => (
+            <ThreadPrimitive.Suggestion
+              key={choice.prompt}
+              prompt={choice.prompt}
+              send
               className="border-foreground/10 hover:bg-foreground/[0.03] hover:border-foreground/25 focus-visible:ring-ring/50 rounded-md border px-2.5 py-1 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-1 motion-reduce:transition-none"
             >
-              <SuggestionPrimitive.Title />
-            </button>
-          </SuggestionPrimitive.Trigger>
-        )}
-      </ThreadPrimitive.Suggestions>
+              {choice.title}
+            </ThreadPrimitive.Suggestion>
+          ))}
     </div>
   </AuiIf>
 );
@@ -456,8 +468,8 @@ const isTouchDevice = () =>
 
 const Composer: FC<{
   autoFocus: boolean;
-  lockedPlaceholder: string | undefined;
-}> = ({ autoFocus, lockedPlaceholder }) => {
+  locked: ThreadLock | undefined;
+}> = ({ autoFocus, locked }) => {
   return (
     <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
       <ComposerPrimitive.AttachmentDropzone asChild>
@@ -467,8 +479,8 @@ const Composer: FC<{
         >
           <ComposerAttachments />
           <ComposerPrimitive.Input
-            placeholder={lockedPlaceholder ?? "Send a message..."}
-            disabled={lockedPlaceholder !== undefined}
+            placeholder={locked?.placeholder ?? "Send a message..."}
+            disabled={locked !== undefined}
             className="aui-composer-input caret-primary placeholder:text-muted-foreground/60 disabled:cursor-not-allowed max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base leading-6 outline-none"
             rows={1}
             autoFocus={autoFocus && !isTouchDevice()}

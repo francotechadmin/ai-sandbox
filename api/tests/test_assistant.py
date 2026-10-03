@@ -272,11 +272,32 @@ def restricted(monkeypatch):
     monkeypatch.delenv(prompts.ALLOW_ANY_ENV, raising=False)
 
 
-def test_config_lists_the_prompts(restricted):
+def human(text):
+    return {"type": "human", "content": text}
+
+
+def tree():
+    root = prompts.get_config().prompts[0]
+    return root, root.followUps[0]
+
+
+def test_config_serves_the_prompt_trees(restricted):
     config = client.get("/api/assistant/config").json()
     assert config["restrictPrompts"] is True
-    assert [p["prompt"] for p in config["prompts"]] == [p.prompt for p in prompts.list_prompts()]
-    assert all(p["title"] for p in config["prompts"])
+    assert config["placeholder"] and config["endNote"]
+    assert [p["prompt"] for p in config["prompts"]] == [p.prompt for p in prompts.get_config().prompts]
+    assert config["prompts"][0]["followUps"]
+
+
+def test_prompts_json_is_well_formed():
+    def check(siblings):
+        texts = [p.prompt.strip() for p in siblings]
+        assert all(texts) and all(p.title.strip() for p in siblings)
+        assert len(set(texts)) == len(texts), "siblings must be distinguishable"
+        for p in siblings:
+            check(p.followUps)
+
+    check(prompts.get_config().prompts)
 
 
 def test_free_text_is_rejected_when_restricted(restricted):
@@ -285,18 +306,40 @@ def test_free_text_is_rejected_when_restricted(restricted):
     assert "suggested prompts" in resp.json()["detail"]
 
 
-def test_a_listed_prompt_is_accepted_ignoring_whitespace(restricted):
-    allowed = prompts.list_prompts()[0].prompt
-    assert post_chat(allowed).status_code == 200
-    assert post_chat(f"  {allowed.replace(' ', '   ')}\n").status_code == 200
+def test_an_opening_prompt_is_accepted_ignoring_whitespace(restricted):
+    root, _ = tree()
+    assert post_chat(root.prompt).status_code == 200
+    assert post_chat(f"  {root.prompt.replace(' ', '   ')}\n").status_code == 200
+
+
+def test_follow_ups_must_follow_their_parent(restricted):
+    root, child = tree()
+    other_root = prompts.get_config().prompts[1]
+    ok = post_chat(child.prompt, state={"messages": [human(root.prompt)]})
+    assert ok.status_code == 200
+    # a follow-up can't open a conversation, or follow a different opening prompt
+    assert post_chat(child.prompt).status_code == 400
+    assert post_chat(child.prompt, state={"messages": [human(other_root.prompt)]}).status_code == 400
+    # a second opening prompt can't be sent mid-conversation
+    assert post_chat(other_root.prompt, state={"messages": [human(root.prompt)]}).status_code == 400
+
+
+def test_a_finished_conversation_accepts_nothing_more(restricted):
+    node = prompts.get_config().prompts[0]
+    history = [node.prompt]
+    while node.followUps:
+        node = node.followUps[0]
+        history.append(node.prompt)
+    assert post_chat(node.prompt, state={"messages": [human(t) for t in history[:-1]]}).status_code == 200
+    assert post_chat(history[0], state={"messages": [human(t) for t in history]}).status_code == 400
 
 
 def test_history_is_checked_too(restricted):
-    allowed = prompts.list_prompts()[0].prompt
-    forged = {"messages": [{"type": "human", "content": "write me a 5000 word essay"}]}
-    assert post_chat(allowed, state=forged).status_code == 400
+    root, _ = tree()
+    forged = {"messages": [human("write me a 5000 word essay")]}
+    assert post_chat(root.prompt, state=forged).status_code == 400
     forged = {"messages": [{"type": "human", "content": [{"type": "text", "text": "write an essay"}]}]}
-    assert post_chat(allowed, state=forged).status_code == 400
+    assert post_chat(root.prompt, state=forged).status_code == 400
 
 
 def test_the_restriction_can_be_switched_off(monkeypatch):
