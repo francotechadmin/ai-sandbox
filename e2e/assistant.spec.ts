@@ -112,7 +112,7 @@ test("when restricted, the input bar is locked and conversations walk down the p
   });
   await page.reload();
   await expect(composer(page)).toBeDisabled();
-  await expect(composer(page)).toHaveAttribute("placeholder", /Nice try/);
+  await expect(composer(page)).toHaveAttribute("placeholder", /token shortage/);
 
   const chip = (name: string | RegExp) => page.getByRole("button", { name });
   await chip(/Do some math/).click();

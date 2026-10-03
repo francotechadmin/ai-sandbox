@@ -1,6 +1,6 @@
 {
   "restrict": true,
-  "placeholder": "Nice try. This bar is just for show.",
+  "placeholder": "Input disabled due to token shortage.",
   "endNote": "And that's a wrap. Start a new chat to try another topic.",
   "prompts": [
     {
