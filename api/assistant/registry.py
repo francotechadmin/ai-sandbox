@@ -5,17 +5,17 @@
 # Reasoning is always on for a model that has a `reasoning` entry. How it is
 # switched on differs per provider, so each provider turns the entry into its
 # own constructor arguments:
-#   anthropic "budget"   extended thinking with a token budget (Haiku 4.5)
-#   anthropic "adaptive" adaptive thinking + effort (Sonnet 5 and newer, which
-#                        reject budget_tokens)
-#   openai               Responses API reasoning effort + summaries
+#   anthropic  extended thinking with a token budget (Haiku 4.5). Newer Claude
+#              models reject budget_tokens and use adaptive thinking instead,
+#              so they need a new branch here.
+#   openai     Responses API reasoning effort + summaries
 
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseChatModel
@@ -37,9 +37,8 @@ class _Config(BaseModel):
 
 
 class Reasoning(_Config):
-    style: Literal["budget", "adaptive"] = "budget"  # Anthropic only
-    budget_tokens: int = 4000  # "budget" style
-    effort: str = "medium"  # "adaptive" style and OpenAI
+    budget_tokens: int = 4000  # Anthropic
+    effort: str = "medium"  # OpenAI
     max_tokens: int | None = None
 
 
@@ -68,11 +67,7 @@ def _anthropic_params(spec: ModelSpec) -> dict[str, Any]:
     params: dict[str, Any] = {"model": spec.model}
     reasoning = spec.reasoning
     max_tokens = (reasoning and reasoning.max_tokens) or spec.max_tokens
-    if reasoning and reasoning.style == "adaptive":
-        # "summarized" is needed to receive the reasoning text at all.
-        params["thinking"] = {"type": "adaptive", "display": "summarized"}
-        params["output_config"] = {"effort": reasoning.effort}
-    elif reasoning:
+    if reasoning:
         # Extended thinking needs the default temperature and max_tokens > budget.
         params["thinking"] = {"type": "enabled", "budget_tokens": reasoning.budget_tokens}
         max_tokens = max_tokens or reasoning.budget_tokens + 4096

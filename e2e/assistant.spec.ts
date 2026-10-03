@@ -77,7 +77,7 @@ test("markdown is rendered", async ({ page }) => {
   await expect(reply.locator("strong")).toHaveText("bold");
   await expect(reply.locator("pre code")).toContainText("def add");
   await expect(reply.getByRole("button", { name: "Copy" }).first()).toBeVisible();
-  await expect(reply.locator("table")).toContainText("GPT-5 mini");
+  await expect(reply.locator("table")).toContainText("GPT-6 Luna");
 });
 
 test("a model failure is shown on the message", async ({ page }) => {
@@ -103,6 +103,24 @@ test("the system prompt persists across reloads; new chat and reset work", async
   await expect(userMessages(page)).toHaveCount(0);
   await page.getByRole("button", { name: "Reset" }).click();
   await expect(page.locator("#system-prompt")).toHaveValue(/helpful assistant/);
+});
+
+test("when restricted, the input bar is locked and only the listed prompts can be sent", async ({ page }) => {
+  await page.route("**/api/assistant/config", async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, json: { ...(await response.json()), restrictPrompts: true } });
+  });
+  await page.reload();
+  await expect(composer(page)).toBeDisabled();
+  await expect(composer(page)).toHaveAttribute("placeholder", "Choose a prompt below");
+
+  await page.getByRole("button", { name: /Do some math/ }).click();
+  await expect(userMessages(page).first()).toContainText("18% tip");
+  await idle(page);
+
+  // The same prompts stay on offer for follow-ups; the input stays locked.
+  await expect(page.getByRole("button", { name: /Check the weather/ })).toBeVisible();
+  await expect(composer(page)).toBeDisabled();
 });
 
 test("the landing page links to the assistant", async ({ page }) => {

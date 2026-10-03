@@ -126,6 +126,8 @@ const taskAwareGroupBy = (
 export type ThreadProps = {
   components?: ThreadComponents | undefined;
   autoFocus?: boolean | undefined;
+  /** LOCAL EDIT (4/4): when set, the input is disabled and shows this text, and the prompts stay available as chips above the composer once the chat has history (they are the only way to send). */
+  lockedPlaceholder?: string | undefined;
 };
 
 const EMPTY_COMPONENTS: ThreadComponents = {};
@@ -170,20 +172,26 @@ const ThreadHistorySkeleton: FC = () => (
 export const Thread: FC<ThreadProps> = ({
   components = EMPTY_COMPONENTS,
   autoFocus = true,
+  lockedPlaceholder,
 }) => {
   const isEmpty = useAuiState(isNewChatView);
 
   return (
     <ThreadComponentsContext.Provider value={components}>
-      <ThreadRoot isEmpty={isEmpty} autoFocus={autoFocus} />
+      <ThreadRoot
+        isEmpty={isEmpty}
+        autoFocus={autoFocus}
+        lockedPlaceholder={lockedPlaceholder}
+      />
     </ThreadComponentsContext.Provider>
   );
 };
 
-const ThreadRoot: FC<{ isEmpty: boolean; autoFocus: boolean }> = ({
-  isEmpty,
-  autoFocus,
-}) => {
+const ThreadRoot: FC<{
+  isEmpty: boolean;
+  autoFocus: boolean;
+  lockedPlaceholder: string | undefined;
+}> = ({ isEmpty, autoFocus, lockedPlaceholder }) => {
   const { Welcome = ThreadWelcome } = useContext(ThreadComponentsContext);
 
   return (
@@ -198,7 +206,7 @@ const ThreadRoot: FC<{ isEmpty: boolean; autoFocus: boolean }> = ({
       }}
     >
       <ThreadPrimitive.Viewport
-        turnAnchor="bottom" // LOCAL EDIT (3/3): classic chat scrolling; the kit default "top" pins each new message to the top of the page
+        turnAnchor="bottom" // LOCAL EDIT (3/4): classic chat scrolling; the kit default "top" pins each new message to the top of the page
         data-slot="aui_thread-viewport"
         className="relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth"
       >
@@ -233,7 +241,11 @@ const ThreadRoot: FC<{ isEmpty: boolean; autoFocus: boolean }> = ({
           >
             <ThreadScrollToBottom />
             <ThreadFollowupSuggestions />
-            <Composer autoFocus={autoFocus} />
+            {lockedPlaceholder !== undefined && <LockedPromptChips />}
+            <Composer
+              autoFocus={autoFocus}
+              lockedPlaceholder={lockedPlaceholder}
+            />
             <AuiIf condition={(s) => isNewChatView(s) && s.composer.isEmpty}>
               <ThreadSuggestions />
             </AuiIf>
@@ -392,6 +404,28 @@ const ThreadSuggestions: FC = () => {
   );
 };
 
+// LOCAL EDIT (4/4, part 2): with the input locked, the configured prompts are the
+// only way to send, so they stay on offer above the composer once the chat has
+// history, as compact chips like the kit's own follow-up suggestions.
+const LockedPromptChips: FC = () => (
+  <AuiIf condition={(s) => !s.thread.isEmpty && !s.thread.isRunning}>
+    <div className="aui-thread-locked-prompts flex flex-wrap justify-center gap-2">
+      <ThreadPrimitive.Suggestions>
+        {() => (
+          <SuggestionPrimitive.Trigger send asChild>
+            <button
+              type="button"
+              className="border-foreground/10 hover:bg-foreground/[0.03] hover:border-foreground/25 focus-visible:ring-ring/50 rounded-md border px-2.5 py-1 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-1 motion-reduce:transition-none"
+            >
+              <SuggestionPrimitive.Title />
+            </button>
+          </SuggestionPrimitive.Trigger>
+        )}
+      </ThreadPrimitive.Suggestions>
+    </div>
+  </AuiIf>
+);
+
 const ThreadSuggestionItem: FC = () => {
   return (
     <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 animate-in fill-mode-both duration-200">
@@ -416,11 +450,14 @@ const ThreadSuggestionItem: FC = () => {
   );
 };
 
-// LOCAL EDIT (1/3): keep the on-screen keyboard closed after sending on touch devices.
+// LOCAL EDIT (1/4): keep the on-screen keyboard closed after sending on touch devices.
 const isTouchDevice = () =>
   typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
-const Composer: FC<{ autoFocus: boolean }> = ({ autoFocus }) => {
+const Composer: FC<{
+  autoFocus: boolean;
+  lockedPlaceholder: string | undefined;
+}> = ({ autoFocus, lockedPlaceholder }) => {
   return (
     <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col">
       <ComposerPrimitive.AttachmentDropzone asChild>
@@ -430,8 +467,9 @@ const Composer: FC<{ autoFocus: boolean }> = ({ autoFocus }) => {
         >
           <ComposerAttachments />
           <ComposerPrimitive.Input
-            placeholder="Send a message..."
-            className="aui-composer-input caret-primary placeholder:text-muted-foreground/60 max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base leading-6 outline-none"
+            placeholder={lockedPlaceholder ?? "Send a message..."}
+            disabled={lockedPlaceholder !== undefined}
+            className="aui-composer-input caret-primary placeholder:text-muted-foreground/60 disabled:cursor-not-allowed max-h-48 min-h-10 w-full resize-none bg-transparent px-2.5 py-1 text-base leading-6 outline-none"
             rows={1}
             autoFocus={autoFocus && !isTouchDevice()}
             unstable_focusOnRunStart={!isTouchDevice()}
@@ -456,7 +494,7 @@ const ComposerAction: FC = () => {
 
   return (
     <div className="aui-composer-action-wrapper relative flex items-center justify-between">
-      {/* LOCAL EDIT (2/3): no attachment support in this app, so no add-attachment button. */}
+      {/* LOCAL EDIT (2/4): no attachment support in this app, so no add-attachment button. */}
       <span />
       <div className="flex items-center gap-1.5">
         <AuiIf condition={(s) => s.thread.capabilities.dictation}>

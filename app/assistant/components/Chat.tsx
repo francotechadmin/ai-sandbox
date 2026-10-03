@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AssistantRuntimeProvider,
   AuiConfig,
@@ -16,12 +16,7 @@ import {
 } from "@/components/assistant-ui/elements/reasoning.aui";
 import { Thread, type ThreadComponents } from "@/components/assistant-ui/elements/thread.aui";
 import { convertState, humanMessages } from "../lib/convert";
-import { STARTERS } from "../lib/starters";
-import type { ChatState, Settings } from "../lib/types";
-
-const config = AuiConfig({
-  suggestions: Suggestions(STARTERS.map((prompt) => ({ title: prompt, label: "", prompt }))),
-});
+import type { ChatState, PromptInfo, Settings } from "../lib/types";
 
 // The kit's own reasoning group, using its borderless "ghost" variant.
 const components: ThreadComponents = {
@@ -47,7 +42,8 @@ function DismissKeyboardOnSend() {
   return null;
 }
 
-export function Chat({ settings }: { settings: Settings }) {
+export function Chat({ settings, prompts, locked }: { settings: Settings; prompts: PromptInfo[]; locked: boolean }) {
+  const config = useMemo(() => AuiConfig({ suggestions: Suggestions(prompts) }), [prompts]);
   // The runtime is created once; the latest settings are read per request.
   const settingsRef = useRef(settings);
   useEffect(() => {
@@ -74,7 +70,7 @@ export function Chat({ settings }: { settings: Settings }) {
   return (
     <AssistantRuntimeProvider runtime={runtime} config={config}>
       <DismissKeyboardOnSend />
-      <Thread components={components} />
+      <Thread components={components} lockedPlaceholder={locked ? "Choose a prompt below" : undefined} />
     </AssistantRuntimeProvider>
   );
 }

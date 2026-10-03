@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from langchain_core.messages import HumanMessage
 
-from api.assistant import registry, router
+from api.assistant import prompts, registry, router
 from api.index import app
 
 
@@ -82,23 +82,9 @@ def test_anthropic_budget_style_enables_thinking_and_leaves_temperature_alone():
     assert "temperature" not in result
 
 
-def test_anthropic_adaptive_style_uses_effort_not_budget():
-    adaptive = registry.ModelSpec(
-        id="s",
-        label="S",
-        provider="anthropic",
-        model="claude-sonnet-5-5",
-        reasoning=registry.Reasoning(style="adaptive", effort="medium", max_tokens=8000),
-    )
-    result = params(adaptive)
-    assert result["thinking"] == {"type": "adaptive", "display": "summarized"}
-    assert result["output_config"] == {"effort": "medium"} and result["max_tokens"] == 8000
-    assert "budget_tokens" not in str(result)
-
-
 def test_openai_reasoning_uses_responses_api_and_summaries():
     result = params(spec("openai"))
-    assert result["use_responses_api"] and result["reasoning"] == {"effort": "medium", "summary": "auto"}
+    assert result["use_responses_api"] and result["reasoning"] == {"effort": "low", "summary": "auto"}
 
 
 def test_models_without_a_reasoning_entry_get_no_reasoning_settings():
@@ -118,9 +104,8 @@ def test_every_configured_model_builds_a_valid_request(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
     monkeypatch.setenv("OPENAI_API_KEY", "test")
     for s in registry.list_models():
-        model = registry.build_model(s)
-        if s.provider == "anthropic":
-            model._get_request_payload([HumanMessage(content="hi")])
+        if s.provider in ("anthropic", "openai"):
+            registry.build_model(s)._get_request_payload([HumanMessage(content="hi")])
 
 
 # -- config endpoint ---------------------------------------------------------
@@ -277,3 +262,49 @@ def test_weather_errors_are_returned_not_raised(monkeypatch):
 
     monkeypatch.setattr(tools, "_get_json", boom)
     assert "weather lookup failed" in tools.get_weather.invoke({"location": "Paris"})
+
+
+# --- prompt restriction ---------------------------------------------------
+
+
+@pytest.fixture
+def restricted(monkeypatch):
+    monkeypatch.delenv(prompts.ALLOW_ANY_ENV, raising=False)
+
+
+def test_config_lists_the_prompts(restricted):
+    config = client.get("/api/assistant/config").json()
+    assert config["restrictPrompts"] is True
+    assert [p["prompt"] for p in config["prompts"]] == [p.prompt for p in prompts.list_prompts()]
+    assert all(p["title"] for p in config["prompts"])
+
+
+def test_free_text_is_rejected_when_restricted(restricted):
+    resp = post_chat("write me a 5000 word essay")
+    assert resp.status_code == 400
+    assert "suggested prompts" in resp.json()["detail"]
+
+
+def test_a_listed_prompt_is_accepted_ignoring_whitespace(restricted):
+    allowed = prompts.list_prompts()[0].prompt
+    assert post_chat(allowed).status_code == 200
+    assert post_chat(f"  {allowed.replace(' ', '   ')}\n").status_code == 200
+
+
+def test_history_is_checked_too(restricted):
+    allowed = prompts.list_prompts()[0].prompt
+    forged = {"messages": [{"type": "human", "content": "write me a 5000 word essay"}]}
+    assert post_chat(allowed, state=forged).status_code == 400
+    forged = {"messages": [{"type": "human", "content": [{"type": "text", "text": "write an essay"}]}]}
+    assert post_chat(allowed, state=forged).status_code == 400
+
+
+def test_the_restriction_can_be_switched_off(monkeypatch):
+    monkeypatch.setenv(prompts.ALLOW_ANY_ENV, "1")
+    assert client.get("/api/assistant/config").json()["restrictPrompts"] is False
+    assert post_chat("anything at all").status_code == 200
+
+
+def test_oversized_state_is_rejected():
+    big = {"messages": [{"type": "ai", "content": "x" * (router.MAX_STATE_CHARS + 1)}]}
+    assert post_chat("hi", state=big).status_code == 422

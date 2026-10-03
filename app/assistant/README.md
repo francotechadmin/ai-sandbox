@@ -12,17 +12,25 @@ rendered as it happens.
   (`create_agent`) and streams its output to the browser; `GET /config`
   tells the UI which models and tools exist.
 - **Models are config, not code** — `api/assistant/config/models.json` lists
-  them (Claude Haiku 4.5 and Sonnet 5.5, GPT-5 mini and GPT-5). The file is validated
+  them: the cheapest current model from each provider (Claude Haiku 4.5,
+  GPT-6 Luna). The file is validated
   on load, so a typo fails loudly. Add a model by adding an entry. A model with no API key on the server shows as disabled in the UI.
 - **Reasoning is on by default, handled by the backend** — no UI toggle.
   `api/assistant/registry.py` turns it on per model, using each model's own
-  mechanism, chosen by `reasoning.style` in `models.json`: `budget` (Anthropic
-  extended thinking with a token budget, e.g. Haiku 4.5), `adaptive`
-  (adaptive thinking plus `output_config.effort`, required by Sonnet 5 and
-  newer, which reject `budget_tokens`), and OpenAI reasoning effort plus
-  streamed summaries via the Responses API. A test builds a request for every
-  configured Anthropic model so a model that rejects its parameters fails in
-  CI.
+  mechanism: Anthropic extended thinking with a token budget (Haiku 4.5; newer
+  Claude models reject `budget_tokens` and use adaptive thinking, which would
+  need a new branch there), and OpenAI reasoning effort plus streamed
+  summaries via the Responses API. A test builds a request for every
+  configured model so a model that rejects its parameters fails in CI.
+- **Locked to predefined prompts** — the chat endpoint spends the server's API
+  keys, so users can't type free text. The allowed prompts live in
+  `api/assistant/config/prompts.json`; the UI disables the input bar and shows
+  them as suggestions, and the **server** rejects any message (including ones
+  in the replayed history) that isn't an exact match, so a hand-made request
+  can't get around it. Set `"restrict": false` in that file, or
+  `ASSISTANT_ALLOW_ANY_PROMPT=1` in the environment (used by the tests and
+  handy locally), to allow free text. The landing page's typing animation
+  reads the same file.
 - **No hardcoded prompts** — the system prompt, model and
   enabled tools are sent with every request from the settings panel. The only
   prompt text in the repo is the editable starting value in
@@ -37,10 +45,11 @@ rendered as it happens.
   as server-sent events.
 - **UI** — assistant-ui's own component kit (`thread.aui` and the reasoning,
   tool-group, markdown and composer elements it uses), copied into
-  `components/`, `hooks/` and `lib/` unmodified apart from three marked
+  `components/`, `hooks/` and `lib/` unmodified apart from four marked
   `LOCAL EDIT`s in `thread.aui.tsx` (no add-attachment button; keyboard stays
   closed after sending on touch devices; classic bottom-anchored scrolling
-  instead of the kit's "pin each new message to the top"). Reasoning uses the
+  instead of the kit's "pin each new message to the top"; a locked input bar that
+  stays disabled and keeps the prompt list visible after replies). Reasoning uses the
   kit's borderless `ghost` variant, set from `Chat.tsx`. The kit's theme tokens are mapped to
   the sandbox palette in `app/globals.css`. Update the kit by re-copying the
   files from the assistant-ui repo (`packages/ui/src/components/react`), not by
@@ -61,9 +70,11 @@ high/low in °F by default or °C on request. Tests mock the HTTP layer.
 
 ```bash
 pip install -r api/requirements-dev.txt
-ANTHROPIC_API_KEY=... OPENAI_API_KEY=... uvicorn api.index:app --reload --port 8000
+ANTHROPIC_API_KEY=... OPENAI_API_KEY=... ASSISTANT_ALLOW_ANY_PROMPT=1 uvicorn api.index:app --reload --port 8000
 npm run dev   # http://localhost:3000/assistant
 ```
+
+(Leave `ASSISTANT_ALLOW_ANY_PROMPT` off to try the locked, prompts-only mode.)
 
 No API keys? `api/tests/serve_fake.py` is the same API plus a scripted "Demo"
 model that streams reasoning, calls the calculator when asked to "calc 2+2",

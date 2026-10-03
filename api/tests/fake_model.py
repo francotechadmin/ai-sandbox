@@ -42,7 +42,7 @@ def add(a, b):
 | Model | Provider |
 |-------|----------|
 | Haiku | Anthropic |
-| GPT-5 mini | OpenAI |
+| GPT-6 Luna | OpenAI |
 """
 
 

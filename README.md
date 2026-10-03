@@ -86,9 +86,13 @@ OPENAI_API_KEY=sk-...
 
 A model whose key isn't set shows as disabled in the model picker.
 
+The assistant only accepts the prompts in `api/assistant/config/prompts.json`
+(enforced on the server). Set `ASSISTANT_ALLOW_ANY_PROMPT=1` to allow free
+text, e.g. locally.
+
 **Protect the deployment.** The chat endpoint spends these keys and has no
-login of its own. Requests are size-limited, but anyone who can reach the URL
-can chat, so keep Vercel Deployment Protection (or another gate) on for any
+login of its own. Requests are size-limited and restricted to the listed prompts, but anyone
+who can reach the URL can still send those (there is no rate limit), so keep Vercel Deployment Protection (or another gate) on for any
 deployment that holds real keys.
 
 ## Tooling notes

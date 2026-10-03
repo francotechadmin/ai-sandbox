@@ -1,0 +1,25 @@
+{
+  "restrict": true,
+  "prompts": [
+    {
+      "title": "Check the weather",
+      "label": "in Houston right now",
+      "prompt": "What's the weather in Houston right now?"
+    },
+    {
+      "title": "Plan a migration",
+      "label": "of a Postgres database",
+      "prompt": "Walk me through a plan to migrate a Postgres database."
+    },
+    {
+      "title": "Explain reasoning models",
+      "label": "versus regular ones",
+      "prompt": "Explain how reasoning models differ from regular ones."
+    },
+    {
+      "title": "Do some math",
+      "label": "with the calculator",
+      "prompt": "What's an 18% tip on $86.40, split three ways? Use the calculator."
+    }
+  ]
+}

@@ -6,13 +6,15 @@
 #                               "data stream" transport; chat state lives in
 #                               the browser and is sent back every request)
 #
-# Nothing here injects a prompt: the system prompt, model and enabled tools
+# Messages must match config/prompts.json unless the restriction is off (see
+# prompts.py). Nothing here injects a prompt: the system prompt, model and enabled tools
 # all come from the request. The chat state is a list of LangChain messages
 # (assistant-ui's LangGraph transport pattern); failures after the request is
 # accepted (unknown model, missing API key, provider errors) are sent as an
 # error in the stream.
 
 import copy
+import json
 from typing import Any
 
 from assistant_stream import RunController, create_run
@@ -23,7 +25,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field, field_validator
 
-from . import registry
+from . import prompts, registry
 from .tools import describe_tools, select_tools
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
@@ -35,6 +37,7 @@ RECURSION_LIMIT = 15
 MAX_STATE_MESSAGES = 100
 MAX_COMMANDS = 10
 MAX_PROMPT_CHARS = 20_000
+MAX_STATE_CHARS = 500_000
 MAX_TOOLS = 10
 
 
@@ -56,6 +59,8 @@ class ChatRequest(BaseModel):
             raise ValueError(
                 f"The conversation is too long (more than {MAX_STATE_MESSAGES} messages). Start a new chat."
             )
+        if state and len(json.dumps(state)) > MAX_STATE_CHARS:
+            raise ValueError("The conversation is too large. Start a new chat.")
         return state
 
 
@@ -69,12 +74,28 @@ def get_config() -> dict[str, Any]:
             for m in registry.list_models()
         ],
         "tools": describe_tools(),
+        "restrictPrompts": prompts.restricted(),
+        "prompts": [p.model_dump() for p in prompts.list_prompts()],
     }
 
 
 def _user_text(command: dict[str, Any]) -> str:
     message = command.get("message") or {}
     return "\n".join(p["text"] for p in message.get("parts", []) if p.get("type") == "text" and p.get("text")).strip()
+
+
+def _human_texts(messages: list[Any]) -> list[str]:
+    """The text of each human message in a state received from the browser."""
+    texts = []
+    for message in messages:
+        if isinstance(message, dict) and message.get("type") == "human":
+            content = message.get("content")
+            texts.append(
+                content
+                if isinstance(content, str)
+                else "\n".join(b.get("text", "") for b in content or [] if isinstance(b, dict))
+            )
+    return texts
 
 
 @router.post("/chat")
@@ -86,6 +107,10 @@ async def chat(req: ChatRequest):
         raise HTTPException(status_code=400, detail="No user message to respond to.")
 
     state = req.state or {}
+    # The history comes from the browser too, so it is checked the same way.
+    sent = [*_human_texts(state.get("messages", [])), *(m.text for m in user_messages)]
+    if not all(prompts.is_allowed(text) for text in sent):
+        raise HTTPException(status_code=400, detail="Only the suggested prompts can be sent.")
     history = copy.deepcopy(state.get("messages", []))  # the run mutates the shared state below
     system_prompt = req.settings.systemPrompt.strip()
 

@@ -12,11 +12,16 @@ type ModelInfo = {
   available: boolean;
 };
 
+export type PromptInfo = { title: string; label: string; prompt: string };
+
 export type AssistantConfig = {
   defaultModel: string;
   defaultSystemPrompt: string;
   models: ModelInfo[];
   tools: { name: string; description: string }[];
+  // The prompts users may send; when restricted, the input bar is locked to them.
+  restrictPrompts: boolean;
+  prompts: PromptInfo[];
 };
 
 export type Settings = {

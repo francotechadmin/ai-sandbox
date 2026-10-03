@@ -6,28 +6,19 @@
       "label": "Claude Haiku 4.5",
       "provider": "anthropic",
       "model": "claude-haiku-4-5-20251001",
-      "reasoning": { "style": "budget", "budgetTokens": 4000, "maxTokens": 8000 }
+      "reasoning": {
+        "budgetTokens": 4000,
+        "maxTokens": 8000
+      }
     },
     {
-      "id": "gpt-5-mini",
-      "label": "GPT-5 mini",
+      "id": "gpt-6-luna",
+      "label": "GPT-6 Luna",
       "provider": "openai",
-      "model": "gpt-5-mini",
-      "reasoning": { "effort": "medium" }
-    },
-    {
-      "id": "claude-sonnet-5-5",
-      "label": "Claude Sonnet 5.5",
-      "provider": "anthropic",
-      "model": "claude-sonnet-5-5",
-      "reasoning": { "style": "adaptive", "effort": "medium", "maxTokens": 8000 }
-    },
-    {
-      "id": "gpt-5",
-      "label": "GPT-5",
-      "provider": "openai",
-      "model": "gpt-5",
-      "reasoning": { "effort": "medium" }
+      "model": "gpt-6-luna",
+      "reasoning": {
+        "effort": "low"
+      }
     }
   ]
 }
