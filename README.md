@@ -55,11 +55,10 @@ tsconfig.json                # strict TypeScript across the frontend
 
 ```bash
 npm install
-npm run dev        # Next.js frontend, http://localhost:3000
-
 pip install -r api/requirements-dev.txt
-uvicorn api.index:app --reload --port 8000   # FastAPI backend
 ```
+
+Then launch **Full Stack** from the VS Code Run panel (`.vscode/launch.json`) — it starts Next.js on port 3000 and FastAPI on port 8000 together, with debuggers attached to both.
 
 ## Checks (also run in CI)
 
