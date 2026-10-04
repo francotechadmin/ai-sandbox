@@ -1,5 +1,5 @@
-# The prompts users may send. They live in config/prompts.json, not in code, as
-# conversation trees: a few opening prompts, each with follow-ups, and so on
+# The prompts users may send. They live in the agent's file (agents/<agent>.json),
+# not in code, as conversation trees: a few opening prompts, each with follow-ups, and so on
 # until a conversation ends.
 #
 # The endpoint spends the server's API keys, so by default ("restrict": true)
@@ -11,13 +11,10 @@
 # development, tests).
 
 import os
-from functools import cache
-from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
 ALLOW_ANY_ENV = "ASSISTANT_ALLOW_ANY_PROMPT"
-DEFAULT_CONFIG_DIR = Path(__file__).parent / "config"
 
 
 class Prompt(BaseModel):
@@ -38,24 +35,19 @@ class PromptConfig(BaseModel):
     prompts: list[Prompt]
 
 
-@cache
-def get_config(config_dir: Path = DEFAULT_CONFIG_DIR) -> PromptConfig:
-    return PromptConfig.model_validate_json((config_dir / "prompts.json").read_text())
-
-
 def _normalize(text: str) -> str:
     return " ".join(text.split())
 
 
-def restricted(config_dir: Path = DEFAULT_CONFIG_DIR) -> bool:
-    return get_config(config_dir).restrict and os.environ.get(ALLOW_ANY_ENV) != "1"
+def restricted(config: PromptConfig) -> bool:
+    return config.restrict and os.environ.get(ALLOW_ANY_ENV) != "1"
 
 
-def allows(texts: list[str], config_dir: Path = DEFAULT_CONFIG_DIR) -> bool:
+def allows(texts: list[str], config: PromptConfig) -> bool:
     """Whether these user messages, in order, walk down one of the trees."""
-    if not restricted(config_dir):
+    if not restricted(config):
         return True
-    choices = get_config(config_dir).prompts
+    choices = config.prompts
     for text in texts:
         node = next((p for p in choices if _normalize(p.prompt) == _normalize(text)), None)
         if node is None:

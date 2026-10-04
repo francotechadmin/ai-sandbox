@@ -15,7 +15,9 @@ export default function AssistantPage() {
   const [showSettings, setShowSettings] = useState(false); // phone only; always visible on large screens
 
   useEffect(() => {
-    fetch("/api/assistant/config")
+    // ?agent=<name> picks an agent file (api/assistant/agents/<name>.json); the default one otherwise.
+    const agent = new URLSearchParams(window.location.search).get("agent");
+    fetch(`/api/assistant/config${agent ? `?agent=${encodeURIComponent(agent)}` : ""}`)
       .then((r) => (r.ok ? (r.json() as Promise<AssistantConfig>) : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((c) => {
         setConfig(c);
@@ -26,7 +28,7 @@ export default function AssistantPage() {
 
   function update(next: Settings) {
     setSettings(next);
-    saveSettings(next);
+    if (config) saveSettings(config.agent, next);
   }
 
   return (
@@ -37,7 +39,7 @@ export default function AssistantPage() {
             AI Sandbox
           </Link>
           <span className="text-line" aria-hidden>/</span>
-          <span className="font-medium tracking-tight">Assistant</span>
+          <span className="font-medium tracking-tight">{config?.name ?? "Assistant"}</span>
         </div>
         {config && settings && (
           <button

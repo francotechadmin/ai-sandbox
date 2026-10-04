@@ -1,8 +1,4 @@
-# Router for the assistant chat. `create_router(config_dir)` builds one router per
-# agent: everything agent-specific (models, default system prompt, prompt
-# trees) lives in the config directory, while streaming, request validation and
-# the trace sharing are shared. The default assistant is `router`, mounted under
-# /api/assistant in api/index.py.
+# Router for the assistant chat. Mounted under /api/assistant in api/index.py.
 #
 #   GET  /api/assistant/config  models, tools and the default system prompt
 #                               the UI starts from
@@ -10,9 +6,11 @@
 #                               "data stream" transport; chat state lives in
 #                               the browser and is sent back every request)
 #
-# The conversation must follow a tree in config/prompts.json unless the restriction is off (see
-# prompts.py). Nothing here injects a prompt: the system prompt, model and enabled tools
-# all come from the request. The chat state is a list of LangChain messages
+# Each request names an agent (agents/<name>.json: system prompt, allowed models
+# and tools, prompt trees; the default agent when it names none). The conversation
+# must follow the agent's prompt tree unless the restriction is off (see
+# prompts.py). Nothing here injects a prompt: the system prompt, model and enabled
+# tools come from the request, within what the agent allows. The chat state is a list of LangChain messages
 # (assistant-ui's LangGraph transport pattern); failures after the request is
 # accepted (unknown model, missing API key, provider errors) are sent as an
 # error in the stream.
@@ -23,7 +21,6 @@ import json
 import logging
 import time
 import uuid
-from pathlib import Path
 from typing import Any
 
 from assistant_stream import RunController, create_run
@@ -37,10 +34,10 @@ from langsmith import Client
 from langsmith.utils import get_tracer_project, tracing_is_enabled
 from pydantic import BaseModel, Field, field_validator
 
-from . import prompts, registry
+from . import agents, prompts, registry
 from .tools import describe_tools, select_tools
 
-DEFAULT_PREFIX = "/api/assistant"
+router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 logger = logging.getLogger("api.assistant")
 
 RECURSION_LIMIT = 15
@@ -57,6 +54,7 @@ MAX_TOOLS = 10
 
 
 class Settings(BaseModel):
+    agent: str | None = Field(default=None, max_length=100)
     model: str | None = None
     systemPrompt: str = Field(default="", max_length=MAX_PROMPT_CHARS)
     tools: list[str] = Field(default_factory=list, max_length=MAX_TOOLS)
@@ -77,6 +75,40 @@ class ChatRequest(BaseModel):
         if state and len(json.dumps(state)) > MAX_STATE_CHARS:
             raise ValueError("The conversation is too large. Start a new chat.")
         return state
+
+
+def _agent_models(agent: agents.AgentConfig) -> list[registry.ModelSpec]:
+    return [m for m in registry.list_models() if agent.models is None or m.id in agent.models]
+
+
+@router.get("/agents")
+def list_agents() -> list[dict[str, str]]:
+    return [{"id": i, "name": agents.get_agent(i)[1].name} for i in agents.list_agents()]
+
+
+@router.get("/config")
+def get_config(agent: str | None = None) -> dict[str, Any]:
+    try:
+        agent_id, cfg = agents.get_agent(agent)
+    except agents.UnknownAgentError as err:
+        raise HTTPException(status_code=404, detail=str(err)) from err
+    models = _agent_models(cfg)
+    ids = [m.id for m in models]
+    return {
+        "agent": agent_id,
+        "name": cfg.name,
+        "defaultModel": cfg.defaultModel
+        if cfg.defaultModel in ids
+        else (ids[0] if ids else registry.default_model_id()),
+        "defaultSystemPrompt": cfg.systemPrompt,
+        "models": [
+            {"id": m.id, "label": m.label, "provider": m.provider, "available": registry.is_available(m)}
+            for m in models
+        ],
+        "tools": describe_tools(cfg.tools),
+        "restrictPrompts": prompts.restricted(cfg),
+        **cfg.model_dump(include={"placeholder", "endNote", "prompts"}),
+    }
 
 
 async def share_trace(run_id: uuid.UUID) -> str | None:
@@ -126,103 +158,84 @@ def _human_texts(messages: list[Any]) -> list[str]:
     return texts
 
 
-def create_router(config_dir: Path, prefix: str = DEFAULT_PREFIX) -> APIRouter:
-    """The chat router for the agent configured by `config_dir` (models.json,
-    prompts.json, default_system_prompt.md), mounted under `prefix`."""
-    config_dir = Path(config_dir)
-    router = APIRouter(prefix=prefix, tags=["assistant"])
+@router.post("/chat")
+async def chat(req: ChatRequest):
+    user_messages = [
+        HumanMessage(content=t) for c in req.commands if c.get("type") == "add-message" and (t := _user_text(c))
+    ]
+    if not user_messages:
+        raise HTTPException(status_code=400, detail="No user message to respond to.")
 
-    @router.get("/config")
-    def get_config() -> dict[str, Any]:
-        return {
-            "defaultModel": registry.default_model_id(config_dir),
-            "defaultSystemPrompt": registry.default_system_prompt(config_dir),
-            "models": [
-                {"id": m.id, "label": m.label, "provider": m.provider, "available": registry.is_available(m)}
-                for m in registry.list_models(config_dir)
-            ],
-            "tools": describe_tools(),
-            "restrictPrompts": prompts.restricted(config_dir),
-            **prompts.get_config(config_dir).model_dump(exclude={"restrict"}),
-        }
+    try:
+        _, cfg = agents.get_agent(req.settings.agent)
+    except agents.UnknownAgentError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
 
-    @router.post("/chat")
-    async def chat(req: ChatRequest):
-        user_messages = [
-            HumanMessage(content=t) for c in req.commands if c.get("type") == "add-message" and (t := _user_text(c))
-        ]
-        if not user_messages:
-            raise HTTPException(status_code=400, detail="No user message to respond to.")
+    state = req.state or {}
+    # The history comes from the browser too, so it is checked the same way.
+    sent = [*_human_texts(state.get("messages", [])), *(m.content for m in user_messages)]
+    if not prompts.allows(sent, cfg):
+        raise HTTPException(status_code=400, detail="Only the suggested prompts can be sent, in order.")
+    history = copy.deepcopy(state.get("messages", []))  # the run mutates the shared state below
+    # When prompts are restricted the system prompt is too: the editable one in
+    # the request is ignored in favor of the server's default.
+    system_prompt = (cfg.systemPrompt if prompts.restricted(cfg) else req.settings.systemPrompt).strip()
 
-        state = req.state or {}
-        # The history comes from the browser too, so it is checked the same way.
-        sent = [*_human_texts(state.get("messages", [])), *(m.content for m in user_messages)]
-        if not prompts.allows(sent, config_dir):
-            raise HTTPException(status_code=400, detail="Only the suggested prompts can be sent, in order.")
-        history = copy.deepcopy(state.get("messages", []))  # the run mutates the shared state below
-        # When prompts are restricted the system prompt is too: the editable one in
-        # the request is ignored in favor of the server's default.
-        system_prompt = (
-            registry.default_system_prompt(config_dir) if prompts.restricted(config_dir) else req.settings.systemPrompt
-        ).strip()
+    async def run(controller: RunController) -> None:
+        started = time.perf_counter()
+        outcome = "ok"
+        # Metadata only: prompts and messages are user content and stay out of logs.
+        logger.info(
+            "chat start",
+            extra={
+                "model": req.settings.model,
+                "tools": req.settings.tools,
+                "history_messages": len(history),
+                "new_messages": len(user_messages),
+            },
+        )
+        if "messages" not in controller.state:
+            controller.state["messages"] = []
+        for message in user_messages:
+            controller.state["messages"].append(message.model_dump())
+        controller.state["traceUrl"] = None  # the state is echoed back by the browser: drop the previous turn's link
+        run_id = uuid.uuid4()
 
-        async def run(controller: RunController) -> None:
-            started = time.perf_counter()
-            outcome = "ok"
-            # Metadata only: prompts and messages are user content and stay out of logs.
+        try:
+            spec = registry.get_spec(req.settings.model or cfg.defaultModel)
+            if cfg.models is not None and spec.id not in cfg.models:
+                raise registry.ModelConfigError(f"Model '{spec.id}' is not available for this agent.")
+            model = registry.build_model(spec)
+            agent = create_agent(
+                model, select_tools(req.settings.tools, cfg.tools), system_prompt=system_prompt or None
+            )
+            # assistant-ui's LangGraph pattern: the chat state is LangChain's own
+            # message list, and the stream is folded into it by the library.
+            async for namespace, event_type, chunk in agent.astream(
+                {"messages": [*history, *user_messages]},
+                config={"recursion_limit": RECURSION_LIMIT, "run_id": run_id},
+                stream_mode=["messages", "updates"],
+                subgraphs=True,
+            ):
+                if controller.is_cancelled:
+                    break
+                append_langgraph_event(controller.state, namespace, event_type, chunk)
+            if not controller.is_cancelled and (url := await share_trace(run_id)):
+                controller.state["traceUrl"] = url
+        except registry.ModelConfigError as err:
+            outcome = "config_error"
+            logger.warning("chat config error: %s", err)
+            controller.add_error(str(err))
+        except Exception as err:  # reported to the UI, not swallowed
+            outcome = "error"
+            logger.exception("chat failed")
+            controller.add_error(f"{type(err).__name__}: {err}")
+        finally:
+            if controller.is_cancelled and outcome == "ok":
+                outcome = "cancelled"
             logger.info(
-                "chat start",
-                extra={
-                    "model": req.settings.model,
-                    "tools": req.settings.tools,
-                    "history_messages": len(history),
-                    "new_messages": len(user_messages),
-                },
+                "chat end",
+                extra={"outcome": outcome, "duration_ms": round((time.perf_counter() - started) * 1000, 1)},
             )
-            if "messages" not in controller.state:
-                controller.state["messages"] = []
-            for message in user_messages:
-                controller.state["messages"].append(message.model_dump())
-            controller.state["traceUrl"] = (
-                None  # the state is echoed back by the browser: drop the previous turn's link
-            )
-            run_id = uuid.uuid4()
 
-            try:
-                model = registry.build_model(registry.get_spec(req.settings.model, config_dir))
-                agent = create_agent(model, select_tools(req.settings.tools), system_prompt=system_prompt or None)
-                # assistant-ui's LangGraph pattern: the chat state is LangChain's own
-                # message list, and the stream is folded into it by the library.
-                async for namespace, event_type, chunk in agent.astream(
-                    {"messages": [*history, *user_messages]},
-                    config={"recursion_limit": RECURSION_LIMIT, "run_id": run_id},
-                    stream_mode=["messages", "updates"],
-                    subgraphs=True,
-                ):
-                    if controller.is_cancelled:
-                        break
-                    append_langgraph_event(controller.state, namespace, event_type, chunk)
-                if not controller.is_cancelled and (url := await share_trace(run_id)):
-                    controller.state["traceUrl"] = url
-            except registry.ModelConfigError as err:
-                outcome = "config_error"
-                logger.warning("chat config error: %s", err)
-                controller.add_error(str(err))
-            except Exception as err:  # reported to the UI, not swallowed
-                outcome = "error"
-                logger.exception("chat failed")
-                controller.add_error(f"{type(err).__name__}: {err}")
-            finally:
-                if controller.is_cancelled and outcome == "ok":
-                    outcome = "cancelled"
-                logger.info(
-                    "chat end",
-                    extra={"outcome": outcome, "duration_ms": round((time.perf_counter() - started) * 1000, 1)},
-                )
-
-        return AssistantTransportResponse(create_run(run, state=state))
-
-    return router
-
-
-router = create_router(prompts.DEFAULT_CONFIG_DIR)
+    return AssistantTransportResponse(create_run(run, state=state))

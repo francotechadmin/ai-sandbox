@@ -95,7 +95,7 @@ KV_REST_API_TOKEN=...
 A model whose key isn't set shows as disabled in the model picker.
 
 The assistant only accepts the conversation trees in
-`api/assistant/config/prompts.json` (enforced on the server). Set `ASSISTANT_ALLOW_ANY_PROMPT=1` to allow free
+`api/assistant/agents/assistant.json` (enforced on the server). Set `ASSISTANT_ALLOW_ANY_PROMPT=1` to allow free
 text, e.g. locally.
 
 **Protect the deployment.** The chat endpoint spends these keys and has no

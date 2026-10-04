@@ -1,4 +1,12 @@
 {
+  "name": "Assistant",
+  "systemPrompt": "You are a helpful assistant. Answer clearly and concisely. When a question needs the current time or arithmetic, use the tools available to you instead of guessing.",
+  "defaultModel": "claude-haiku-4-5",
+  "tools": [
+    "get_current_time",
+    "calculator",
+    "get_weather"
+  ],
   "restrict": true,
   "placeholder": "Input disabled due to token shortage.",
   "endNote": "And that's a wrap. Start a new chat to try another topic.",
