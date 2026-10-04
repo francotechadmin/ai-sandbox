@@ -165,3 +165,36 @@ async def test_the_bundled_database_is_the_full_dataset(monkeypatch):
         {"sql": "SELECT COUNT(*), SUM(machine_failure), SUM(twf), SUM(hdf), SUM(pwf), SUM(osf), SUM(rnf) FROM machines"}
     )
     assert out == "[(10000, 339, 46, 115, 95, 98, 19)]"
+
+
+# -- indexing script ---------------------------------------------------------
+def _indexer():
+    spec = importlib.util.spec_from_file_location(
+        "index_maintenance_docs", ROOT / "scripts" / "index_maintenance_docs.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_documents_are_chunked_by_section_with_the_title_in_each_chunk():
+    chunks = _indexer().chunk_document("# Pump seal\n\nIntro text.\n\n## Check\n1. Look.\n\n## Fix\n1. Replace.", "x")
+    assert chunks == [
+        ("Pump seal", "Pump seal\n\nIntro text."),
+        ("Pump seal / Check", "Pump seal\n\n1. Look."),
+        ("Pump seal / Fix", "Pump seal\n\n1. Replace."),
+    ]
+
+
+def test_long_sections_are_split_under_the_limit():
+    text = "\n\n".join(f"Paragraph {i} " + "x" * 400 for i in range(10))
+    pieces = _indexer().split_text(text, limit=1000)
+    assert len(pieces) > 1 and all(len(p) <= 1000 for p in pieces)
+
+
+def test_every_runbook_is_indexed_with_source_metadata_and_unique_ids():
+    indexer = _indexer()
+    items = indexer.collect([indexer.DOCS_DIR])
+    assert len({i["id"] for i in items}) == len(items) >= 15
+    assert all(i["metadata"]["source"].startswith("Runbook: ") and i["data"] for i in items)
+    assert len(list((indexer.DOCS_DIR / "runbooks").glob("*.md"))) == 15
