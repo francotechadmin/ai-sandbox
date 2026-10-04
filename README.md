@@ -100,6 +100,20 @@ at the edge (20 requests / 60 s per IP via Vercel KV). That still leaves the lis
 open to anyone who can reach the URL, so keep Vercel Deployment Protection (or another gate) on for
 any deployment that holds real keys.
 
+## API logging
+
+The backend writes one JSON line per request to stdout (`api/request_logging.py`),
+which Vercel collects under the function's runtime logs:
+
+```json
+{"ts":"…","level":"INFO","logger":"api.request","msg":"request","request_id":"…","method":"POST","path":"/api/assistant/chat","status":200,"duration_ms":4210.3,"client_ip":"…","user_agent":"…"}
+```
+
+- Every response carries an `x-request-id` header (the caller's `x-request-id`, else Vercel's `x-vercel-id`, else generated); the same id is on every log line emitted during that request.
+- Chat turns add `chat start` / `chat end` lines (model, tools, message counts, outcome, duration) and log tracebacks for failures.
+- Request and response bodies, prompts and message text are **never** logged.
+- `LOG_LEVEL` (default `INFO`) sets verbosity. Add new log lines with `logging.getLogger("api.<demo>")`.
+
 ## Tooling notes
 
 Dependencies are on their latest majors (Next 16, React 19, Tailwind 4,

@@ -6,7 +6,11 @@
 from fastapi import FastAPI
 
 from .assistant.router import router as assistant_router
+from .request_logging import RequestLoggingMiddleware, configure_logging
+
+configure_logging()
 
 app = FastAPI(title="AI Sandbox API")
+app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(assistant_router)
