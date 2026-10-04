@@ -17,6 +17,7 @@ import asyncio
 import copy
 import json
 import logging
+import os
 import time
 import uuid
 from typing import Any
@@ -106,13 +107,16 @@ async def share_trace(run_id: uuid.UUID) -> str | None:
         await asyncio.to_thread(wait_for_all_tracers)  # the run is uploaded in the background
         client = Client()
         runs = await asyncio.to_thread(lambda: client.runs)  # checks the backend version over the network
-        # The v2 endpoint wants the tracing project's UUID, not its name.
+        # The v2 endpoint wants the tracing project's UUID, not its name: LANGSMITH_PROJECT_ID, or looked up by name.
         project = get_tracer_project()
-        if project not in _project_ids:
-            _project_ids[project] = str((await asyncio.to_thread(client.read_project, project_name=project)).id)
+        project_id = os.environ.get("LANGSMITH_PROJECT_ID") or _project_ids.get(project)
+        if not project_id:
+            project_id = _project_ids[project] = str(
+                (await asyncio.to_thread(client.read_project, project_name=project)).id
+            )
         for delay in (*SHARE_RETRY_DELAYS, None):
             try:
-                shared = await runs.share.create(str(run_id), trace_id=str(run_id), session_id=_project_ids[project])
+                shared = await runs.share.create(str(run_id), trace_id=str(run_id), session_id=project_id)
                 break
             except Exception as err:
                 # a just-uploaded run may not be visible yet
