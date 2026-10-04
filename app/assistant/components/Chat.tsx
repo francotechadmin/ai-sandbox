@@ -86,7 +86,7 @@ export function Chat({ settings, config, onNewChat }: { settings: Settings; conf
     protocol: "assistant-transport",
     api: "/api/assistant/chat",
     headers: {}, // required by the options type
-    body: async () => ({ settings: settingsRef.current }),
+    body: async () => ({ settings: { ...settingsRef.current, agent: config.agent } }),
     converter: (state, meta) => convertState(state, meta, error),
     onResponse: () => setError(null),
     // Show why the request failed and keep what the user typed.

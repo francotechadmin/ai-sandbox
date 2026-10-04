@@ -10,7 +10,14 @@ rendered as it happens.
 - **Backend** (`api/assistant/`) — a FastAPI router mounted at
   `/api/assistant`. `POST /chat` runs a LangChain/LangGraph agent
   (`create_agent`) and streams its output to the browser; `GET /config`
-  tells the UI which models and tools exist.
+  tells the UI which models and tools the agent has.
+- **An agent is one file** — `api/assistant/agents/<name>.json` holds the agent's
+  name, system prompt, the `models` (ids from `models.json`; omit for all) and
+  `tools` it may use, its default model, and its prompt trees (below). Add an
+  agent by adding a file: the one endpoint, streaming, validation and limits
+  are shared. A request names its agent (`settings.agent`; `/config?agent=`;
+  the UI reads `/assistant?agent=<name>`); with none, `assistant` is used. The
+  server only lets an agent use its own models and tools. `GET /agents` lists them.
 - **Models are config, not code** — `api/assistant/config/models.json` lists
   them: the cheapest current model from each provider (Claude Haiku 4.5,
   GPT-6 Luna). The file is validated
@@ -24,15 +31,15 @@ rendered as it happens.
   configured model so a model that rejects its parameters fails in CI.
 - **Locked to predefined prompts** — the chat endpoint spends the server's API
   keys, so users can't type free text. The allowed prompts live in
-  `api/assistant/config/prompts.json` as conversation trees: a few opening
+  the agent's file as conversation trees: a few opening
   prompts, each with follow-ups, and so on until a conversation ends (then an
   end note and a "Start a new chat" link appear). The same file holds the
   funny placeholder shown in the disabled input bar. The UI offers only the
   next choices; the **server** rejects any conversation that doesn't walk down
   one of the trees exactly (replayed history included), so a hand-made request
   can't get around it. The system prompt is locked the same way: the server
-  ignores the one in the request and uses `default_system_prompt.md`, and the
-  settings panel shows it read-only. Edit `prompts.json` to change the
+  ignores the one in the request and uses the agent's `systemPrompt`, and the
+  settings panel shows it read-only. Edit the agent's `prompts` to change the
   conversations. Set
   `"restrict": false` in it, or `ASSISTANT_ALLOW_ANY_PROMPT=1` in the
   environment (used by the tests and handy locally), to allow free text. The
@@ -40,8 +47,8 @@ rendered as it happens.
 - **No hardcoded prompts** — the system prompt, model and
   enabled tools are sent with every request from the settings panel (unless
   locked, see above). The only
-  prompt text in the repo is the editable starting value in
-  `api/assistant/config/default_system_prompt.md`; "Reset" restores it.
+  prompt text in the repo is the editable starting value, `systemPrompt` in the
+  agent's file; "Reset" restores it.
   Settings are stored in the browser (`localStorage`).
 - **Stateless backend, library-native state** — the whole conversation lives
   in the browser as LangChain messages and is sent back each turn

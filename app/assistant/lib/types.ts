@@ -17,6 +17,8 @@ type ModelInfo = {
 export type PromptInfo = { title: string; label?: string; prompt: string; followUps?: PromptInfo[] };
 
 export type AssistantConfig = {
+  agent: string; // id of the agent file this config came from
+  name: string;
   defaultModel: string;
   defaultSystemPrompt: string;
   models: ModelInfo[];

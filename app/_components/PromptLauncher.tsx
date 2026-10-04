@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { ArrowUpIcon } from "lucide-react";
 import { TypeAnimation } from "react-type-animation";
-import { prompts } from "../../api/assistant/config/prompts.json";
+import { prompts } from "../../api/assistant/agents/assistant.json";
 
 // Looks like the assistant's composer and is a link to it. It only types out
-// the assistant's prompts (api/assistant/config/prompts.json); nothing typed here is sent anywhere.
+// the assistant's prompts (api/assistant/agents/assistant.json); nothing typed here is sent anywhere.
 const SEQUENCE = prompts.flatMap(({ prompt }) => [prompt, 2200]);
 
 export function PromptLauncher() {

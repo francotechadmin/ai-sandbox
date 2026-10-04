@@ -6,9 +6,11 @@
 #                               "data stream" transport; chat state lives in
 #                               the browser and is sent back every request)
 #
-# The conversation must follow a tree in config/prompts.json unless the restriction is off (see
-# prompts.py). Nothing here injects a prompt: the system prompt, model and enabled tools
-# all come from the request. The chat state is a list of LangChain messages
+# Each request names an agent (agents/<name>.json: system prompt, allowed models
+# and tools, prompt trees; the default agent when it names none). The conversation
+# must follow the agent's prompt tree unless the restriction is off (see
+# prompts.py). Nothing here injects a prompt: the system prompt, model and enabled
+# tools come from the request, within what the agent allows. The chat state is a list of LangChain messages
 # (assistant-ui's LangGraph transport pattern); failures after the request is
 # accepted (unknown model, missing API key, provider errors) are sent as an
 # error in the stream.
@@ -32,7 +34,7 @@ from langsmith import Client
 from langsmith.utils import get_tracer_project, tracing_is_enabled
 from pydantic import BaseModel, Field, field_validator
 
-from . import prompts, registry
+from . import agents, prompts, registry
 from .tools import describe_tools, select_tools
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
@@ -52,6 +54,7 @@ MAX_TOOLS = 10
 
 
 class Settings(BaseModel):
+    agent: str | None = Field(default=None, max_length=100)
     model: str | None = None
     systemPrompt: str = Field(default="", max_length=MAX_PROMPT_CHARS)
     tools: list[str] = Field(default_factory=list, max_length=MAX_TOOLS)
@@ -74,18 +77,37 @@ class ChatRequest(BaseModel):
         return state
 
 
+def _agent_models(agent: agents.AgentConfig) -> list[registry.ModelSpec]:
+    return [m for m in registry.list_models() if agent.models is None or m.id in agent.models]
+
+
+@router.get("/agents")
+def list_agents() -> list[dict[str, str]]:
+    return [{"id": i, "name": agents.get_agent(i)[1].name} for i in agents.list_agents()]
+
+
 @router.get("/config")
-def get_config() -> dict[str, Any]:
+def get_config(agent: str | None = None) -> dict[str, Any]:
+    try:
+        agent_id, cfg = agents.get_agent(agent)
+    except agents.UnknownAgentError as err:
+        raise HTTPException(status_code=404, detail=str(err)) from err
+    models = _agent_models(cfg)
+    ids = [m.id for m in models]
     return {
-        "defaultModel": registry.default_model_id(),
-        "defaultSystemPrompt": registry.default_system_prompt(),
+        "agent": agent_id,
+        "name": cfg.name,
+        "defaultModel": cfg.defaultModel
+        if cfg.defaultModel in ids
+        else (ids[0] if ids else registry.default_model_id()),
+        "defaultSystemPrompt": cfg.systemPrompt,
         "models": [
             {"id": m.id, "label": m.label, "provider": m.provider, "available": registry.is_available(m)}
-            for m in registry.list_models()
+            for m in models
         ],
-        "tools": describe_tools(),
-        "restrictPrompts": prompts.restricted(),
-        **prompts.get_config().model_dump(exclude={"restrict"}),
+        "tools": describe_tools(cfg.tools),
+        "restrictPrompts": prompts.restricted(cfg),
+        **cfg.model_dump(include={"placeholder", "endNote", "prompts"}),
     }
 
 
@@ -144,15 +166,20 @@ async def chat(req: ChatRequest):
     if not user_messages:
         raise HTTPException(status_code=400, detail="No user message to respond to.")
 
+    try:
+        _, cfg = agents.get_agent(req.settings.agent)
+    except agents.UnknownAgentError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
     state = req.state or {}
     # The history comes from the browser too, so it is checked the same way.
     sent = [*_human_texts(state.get("messages", [])), *(m.content for m in user_messages)]
-    if not prompts.allows(sent):
+    if not prompts.allows(sent, cfg):
         raise HTTPException(status_code=400, detail="Only the suggested prompts can be sent, in order.")
     history = copy.deepcopy(state.get("messages", []))  # the run mutates the shared state below
     # When prompts are restricted the system prompt is too: the editable one in
     # the request is ignored in favor of the server's default.
-    system_prompt = (registry.default_system_prompt() if prompts.restricted() else req.settings.systemPrompt).strip()
+    system_prompt = (cfg.systemPrompt if prompts.restricted(cfg) else req.settings.systemPrompt).strip()
 
     async def run(controller: RunController) -> None:
         started = time.perf_counter()
@@ -175,8 +202,13 @@ async def chat(req: ChatRequest):
         run_id = uuid.uuid4()
 
         try:
-            model = registry.build_model(registry.get_spec(req.settings.model))
-            agent = create_agent(model, select_tools(req.settings.tools), system_prompt=system_prompt or None)
+            spec = registry.get_spec(req.settings.model or cfg.defaultModel)
+            if cfg.models is not None and spec.id not in cfg.models:
+                raise registry.ModelConfigError(f"Model '{spec.id}' is not available for this agent.")
+            model = registry.build_model(spec)
+            agent = create_agent(
+                model, select_tools(req.settings.tools, cfg.tools), system_prompt=system_prompt or None
+            )
             # assistant-ui's LangGraph pattern: the chat state is LangChain's own
             # message list, and the stream is folded into it by the library.
             async for namespace, event_type, chunk in agent.astream(

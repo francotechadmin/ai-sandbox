@@ -1,6 +1,7 @@
 import type { AssistantConfig, Settings } from "./types";
 
-const KEY = "assistant-settings-v1";
+// One saved set of settings per agent: their prompts, models and tools differ.
+const key = (agent: string) => `assistant-settings-v1:${agent}`;
 
 // Settings live in the browser; the backend holds no prompt or preference of
 // its own. First visit starts from the server's seed values (config endpoint).
@@ -14,7 +15,7 @@ export function initialSettings(config: AssistantConfig): Settings {
     tools: config.tools.map((t) => t.name),
   };
   try {
-    const raw = window.localStorage.getItem(KEY);
+    const raw = window.localStorage.getItem(key(config.agent));
     if (!raw) return fallback;
     const saved = JSON.parse(raw) as Partial<Settings>;
     const known = new Set(config.models.map((m) => m.id));
@@ -32,9 +33,9 @@ export function initialSettings(config: AssistantConfig): Settings {
   }
 }
 
-export function saveSettings(settings: Settings): void {
+export function saveSettings(agent: string, settings: Settings): void {
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(settings));
+    window.localStorage.setItem(key(agent), JSON.stringify(settings));
   } catch {
     /* storage unavailable — settings just won't persist */
   }

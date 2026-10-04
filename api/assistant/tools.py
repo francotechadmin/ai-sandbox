@@ -135,9 +135,14 @@ async def get_weather(location: str, units: str = "fahrenheit") -> str:
 TOOLS: dict[str, BaseTool] = {t.name: t for t in (get_current_time, calculator, get_weather)}
 
 
-def describe_tools() -> list[dict[str, str]]:
-    return [{"name": t.name, "description": (t.description or "").strip()} for t in TOOLS.values()]
+def describe_tools(allowed: list[str] | None = None) -> list[dict[str, str]]:
+    return [
+        {"name": t.name, "description": (t.description or "").strip()}
+        for t in TOOLS.values()
+        if allowed is None or t.name in allowed
+    ]
 
 
-def select_tools(names: list[str] | None) -> list[BaseTool]:
-    return [TOOLS[n] for n in (names or []) if n in TOOLS]
+def select_tools(names: list[str] | None, allowed: list[str] | None = None) -> list[BaseTool]:
+    """The requested tools that exist and, when `allowed` is given, that the agent may use."""
+    return [TOOLS[n] for n in (names or []) if n in TOOLS and (allowed is None or n in allowed)]

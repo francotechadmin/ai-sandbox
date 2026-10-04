@@ -104,11 +104,6 @@ def _load() -> _Models:
     return _Models.model_validate_json((CONFIG_DIR / "models.json").read_text())
 
 
-def default_system_prompt() -> str:
-    path = CONFIG_DIR / "default_system_prompt.md"
-    return path.read_text().strip() if path.exists() else ""
-
-
 def list_models() -> list[ModelSpec]:
     return [*_load().models, *_extra_models]
 
