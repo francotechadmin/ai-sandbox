@@ -1,5 +1,6 @@
 # Local development and tests only (not deployed).
 -r requirements.txt
 uvicorn==0.54.0
+python-dotenv
 pytest==9.1.1
 ruff==0.16.10
