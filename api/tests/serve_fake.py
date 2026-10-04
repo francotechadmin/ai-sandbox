@@ -7,9 +7,11 @@ import os
 # Free text, so the UI tests can send whatever they like.
 os.environ.setdefault("ASSISTANT_ALLOW_ANY_PROMPT", "1")
 
+from api.assistant import router  # noqa: E402
 from api.index import app  # noqa: E402
-from api.tests.fake_model import register_fake_model  # noqa: E402
+from api.tests.fake_model import FAKE_TRACE_URL, register_fake_model  # noqa: E402
 
 register_fake_model()
+router.share_trace = lambda run_id: FAKE_TRACE_URL
 
 __all__ = ["app"]

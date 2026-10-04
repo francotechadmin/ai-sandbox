@@ -13,10 +13,12 @@
 # accepted (unknown model, missing API key, provider errors) are sent as an
 # error in the stream.
 
+import asyncio
 import copy
 import json
 import logging
 import time
+import uuid
 from typing import Any
 
 from assistant_stream import RunController, create_run
@@ -25,6 +27,9 @@ from assistant_stream.serialization import AssistantTransportResponse
 from fastapi import APIRouter, HTTPException
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
+from langchain_core.tracers.langchain import wait_for_all_tracers
+from langsmith import Client
+from langsmith.utils import tracing_is_enabled
 from pydantic import BaseModel, Field, field_validator
 
 from . import prompts, registry
@@ -82,6 +87,23 @@ def get_config() -> dict[str, Any]:
     }
 
 
+def share_trace(run_id: uuid.UUID) -> str | None:
+    """Public LangSmith URL of the run, or None when tracing is off or sharing fails.
+
+    Tracing is on when LANGCHAIN_TRACING_V2=true and LANGCHAIN_API_KEY are set.
+    Blocking (network): call it off the event loop. A failure here must never
+    break the chat, so it is logged and reported as "no trace".
+    """
+    if not tracing_is_enabled():
+        return None
+    try:
+        wait_for_all_tracers()  # the run is uploaded in the background; it must exist before it can be shared
+        return Client().share_run(run_id)
+    except Exception:
+        logger.warning("could not share trace", exc_info=True)
+        return None
+
+
 def _user_text(command: dict[str, Any]) -> str:
     message = command.get("message") or {}
     return "\n".join(p["text"] for p in message.get("parts", []) if p.get("type") == "text" and p.get("text")).strip()
@@ -136,6 +158,8 @@ async def chat(req: ChatRequest):
             controller.state["messages"] = []
         for message in user_messages:
             controller.state["messages"].append(message.model_dump())
+        controller.state["traceUrl"] = None  # the state is echoed back by the browser: drop the previous turn's link
+        run_id = uuid.uuid4()
 
         try:
             model = registry.build_model(registry.get_spec(req.settings.model))
@@ -144,13 +168,15 @@ async def chat(req: ChatRequest):
             # message list, and the stream is folded into it by the library.
             async for namespace, event_type, chunk in agent.astream(
                 {"messages": [*history, *user_messages]},
-                config={"recursion_limit": RECURSION_LIMIT},
+                config={"recursion_limit": RECURSION_LIMIT, "run_id": run_id},
                 stream_mode=["messages", "updates"],
                 subgraphs=True,
             ):
                 if controller.is_cancelled:
                     break
                 append_langgraph_event(controller.state, namespace, event_type, chunk)
+            if not controller.is_cancelled and (url := await asyncio.to_thread(share_trace, run_id)):
+                controller.state["traceUrl"] = url
         except registry.ModelConfigError as err:
             outcome = "config_error"
             logger.warning("chat config error: %s", err)

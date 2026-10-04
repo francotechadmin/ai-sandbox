@@ -82,7 +82,7 @@ export function Chat({ settings, config, onNewChat }: { settings: Settings; conf
   const [error, setError] = useState<string | null>(null);
 
   const runtime = useAssistantTransportRuntime<ChatState>({
-    initialState: { messages: [] },
+    initialState: { messages: [], traceUrl: null },
     protocol: "assistant-transport",
     api: "/api/assistant/chat",
     headers: {}, // required by the options type
@@ -92,7 +92,7 @@ export function Chat({ settings, config, onNewChat }: { settings: Settings; conf
     // Show why the request failed and keep what the user typed.
     onError: (err, { commands, updateState }) => {
       setError(err.message);
-      updateState((state) => ({ messages: [...state.messages, ...humanMessages(commands)] }));
+      updateState((state) => ({ ...state, messages: [...state.messages, ...humanMessages(commands)] }));
     },
   });
 

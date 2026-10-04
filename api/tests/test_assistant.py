@@ -1,4 +1,5 @@
 import json
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,6 +7,7 @@ from langchain_core.messages import HumanMessage
 
 from api.assistant import prompts, registry, router
 from api.index import app
+from api.tests.fake_model import FAKE_TRACE_URL
 
 
 @pytest.fixture(autouse=True)
@@ -367,3 +369,29 @@ def test_the_restriction_can_be_switched_off(monkeypatch):
 def test_oversized_state_is_rejected():
     big = {"messages": [{"type": "ai", "content": "x" * (router.MAX_STATE_CHARS + 1)}]}
     assert post_chat("hi", state=big).status_code == 422
+
+
+def trace_url(text, **kw):
+    final, events = chat_events(text, **kw)
+    for event in events:
+        if event["type"] == "update-state":
+            apply_ops(final, event["operations"])
+    return final.get("traceUrl")
+
+
+def test_the_public_trace_url_is_sent_in_the_state(monkeypatch):
+    seen = []
+    monkeypatch.setattr(router, "share_trace", lambda run_id: seen.append(run_id) or FAKE_TRACE_URL)
+    assert trace_url("hello") == FAKE_TRACE_URL
+    assert len(seen) == 1
+
+
+def test_a_previous_trace_url_is_cleared_when_there_is_no_new_one(monkeypatch):
+    monkeypatch.setattr(router, "share_trace", lambda run_id: None)
+    assert trace_url("hello", state={"messages": [], "traceUrl": "https://old.example/trace"}) is None
+
+
+def test_sharing_is_skipped_when_tracing_is_off(monkeypatch):
+    monkeypatch.delenv("LANGCHAIN_TRACING_V2", raising=False)
+    monkeypatch.delenv("LANGSMITH_TRACING", raising=False)
+    assert router.share_trace(uuid.uuid4()) is None
