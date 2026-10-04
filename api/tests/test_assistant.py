@@ -392,6 +392,35 @@ def test_a_previous_trace_url_is_cleared_when_there_is_no_new_one(monkeypatch):
 
 
 def test_sharing_is_skipped_when_tracing_is_off(monkeypatch):
-    monkeypatch.delenv("LANGCHAIN_TRACING_V2", raising=False)
-    monkeypatch.delenv("LANGSMITH_TRACING", raising=False)
+    monkeypatch.setattr(router, "tracing_is_enabled", lambda: False)
+    assert router.share_trace(uuid.uuid4()) is None
+
+
+def test_sharing_waits_for_langsmith_to_ingest_the_run(monkeypatch):
+    calls = []
+
+    class FakeClient:
+        def share_run(self, run_id):
+            calls.append(run_id)
+            if len(calls) < 3:
+                raise router.LangSmithNotFoundError("Run not found")
+            return FAKE_TRACE_URL
+
+    monkeypatch.setattr(router, "tracing_is_enabled", lambda: True)
+    monkeypatch.setattr(router, "wait_for_all_tracers", lambda: None)
+    monkeypatch.setattr(router, "Client", FakeClient)
+    monkeypatch.setattr(router, "SHARE_RETRY_DELAYS", (0, 0, 0))
+    assert router.share_trace(uuid.uuid4()) == FAKE_TRACE_URL
+    assert len(calls) == 3
+
+
+def test_sharing_gives_up_when_the_run_never_appears(monkeypatch):
+    class FakeClient:
+        def share_run(self, run_id):
+            raise router.LangSmithNotFoundError("Run not found")
+
+    monkeypatch.setattr(router, "tracing_is_enabled", lambda: True)
+    monkeypatch.setattr(router, "wait_for_all_tracers", lambda: None)
+    monkeypatch.setattr(router, "Client", FakeClient)
+    monkeypatch.setattr(router, "SHARE_RETRY_DELAYS", (0, 0))
     assert router.share_trace(uuid.uuid4()) is None

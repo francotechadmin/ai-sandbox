@@ -29,7 +29,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from langchain_core.tracers.langchain import wait_for_all_tracers
 from langsmith import Client
-from langsmith.utils import tracing_is_enabled
+from langsmith.utils import LangSmithNotFoundError, tracing_is_enabled
 from pydantic import BaseModel, Field, field_validator
 
 from . import prompts, registry
@@ -39,6 +39,9 @@ router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 logger = logging.getLogger("api.assistant")
 
 RECURSION_LIMIT = 15
+
+# LangSmith ingests uploaded runs asynchronously, so a run can briefly 404 right after the flush.
+SHARE_RETRY_DELAYS = (0.5, 1, 2, 3, 4)  # seconds; ~10 s at most before giving up
 
 # Per-request bounds. The endpoint spends the server's API keys, so a request
 # can't be arbitrarily large (on top of the platform's own body-size limit).
@@ -99,7 +102,15 @@ def share_trace(run_id: uuid.UUID) -> str | None:
         return None
     try:
         wait_for_all_tracers()  # the run is uploaded in the background; it must exist before it can be shared
-        url = Client().share_run(run_id)
+        client = Client()
+        for delay in (*SHARE_RETRY_DELAYS, None):
+            try:
+                url = client.share_run(run_id)
+                break
+            except LangSmithNotFoundError:
+                if delay is None:
+                    raise
+                time.sleep(delay)
         logger.info("trace shared", extra={"run_id": str(run_id), "trace_url": url})
         return url
     except Exception as err:
