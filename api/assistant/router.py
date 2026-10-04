@@ -95,12 +95,15 @@ def share_trace(run_id: uuid.UUID) -> str | None:
     break the chat, so it is logged and reported as "no trace".
     """
     if not tracing_is_enabled():
+        logger.info("trace not shared: tracing is off (set LANGCHAIN_TRACING_V2=true and LANGCHAIN_API_KEY)")
         return None
     try:
         wait_for_all_tracers()  # the run is uploaded in the background; it must exist before it can be shared
-        return Client().share_run(run_id)
-    except Exception:
-        logger.warning("could not share trace", exc_info=True)
+        url = Client().share_run(run_id)
+        logger.info("trace shared", extra={"run_id": str(run_id), "trace_url": url})
+        return url
+    except Exception as err:
+        logger.warning("could not share trace %s: %s: %s", run_id, type(err).__name__, err, exc_info=True)
         return None
 
 
