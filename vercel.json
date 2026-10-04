@@ -7,7 +7,7 @@
   ],
   "functions": {
     "api/index.py": {
-      "includeFiles": "api/assistant/{config,agents}/**"
+      "includeFiles": "api/assistant/{config,agents,data}/**"
     }
   }
 }
