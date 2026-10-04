@@ -12,4 +12,3 @@ os.environ.setdefault("ASSISTANT_ALLOW_ANY_PROMPT", "1")
 from api.tests.fake_model import register_fake_model  # noqa: E402
 
 register_fake_model()
-
