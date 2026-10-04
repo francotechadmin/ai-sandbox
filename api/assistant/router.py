@@ -15,6 +15,8 @@
 
 import copy
 import json
+import logging
+import time
 from typing import Any
 
 from assistant_stream import RunController, create_run
@@ -29,6 +31,7 @@ from . import prompts, registry
 from .tools import describe_tools, select_tools
 
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
+logger = logging.getLogger("api.assistant")
 
 RECURSION_LIMIT = 15
 
@@ -117,6 +120,18 @@ async def chat(req: ChatRequest):
     system_prompt = (registry.default_system_prompt() if prompts.restricted() else req.settings.systemPrompt).strip()
 
     async def run(controller: RunController) -> None:
+        started = time.perf_counter()
+        outcome = "ok"
+        # Metadata only: prompts and messages are user content and stay out of logs.
+        logger.info(
+            "chat start",
+            extra={
+                "model": req.settings.model,
+                "tools": req.settings.tools,
+                "history_messages": len(history),
+                "new_messages": len(user_messages),
+            },
+        )
         if "messages" not in controller.state:
             controller.state["messages"] = []
         for message in user_messages:
@@ -137,8 +152,19 @@ async def chat(req: ChatRequest):
                     break
                 append_langgraph_event(controller.state, namespace, event_type, chunk)
         except registry.ModelConfigError as err:
+            outcome = "config_error"
+            logger.warning("chat config error: %s", err)
             controller.add_error(str(err))
         except Exception as err:  # reported to the UI, not swallowed
+            outcome = "error"
+            logger.exception("chat failed")
             controller.add_error(f"{type(err).__name__}: {err}")
+        finally:
+            if controller.is_cancelled and outcome == "ok":
+                outcome = "cancelled"
+            logger.info(
+                "chat end",
+                extra={"outcome": outcome, "duration_ms": round((time.perf_counter() - started) * 1000, 1)},
+            )
 
     return AssistantTransportResponse(create_run(run, state=state))
