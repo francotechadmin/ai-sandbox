@@ -82,6 +82,11 @@ they run as two processes since Vercel's dev server isn't available here.)
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
+
+# Injected automatically when Vercel KV (Upstash) is connected to the project.
+# Without these the edge rate limiter is silently skipped (fine for local dev).
+KV_REST_API_URL=...
+KV_REST_API_TOKEN=...
 ```
 
 A model whose key isn't set shows as disabled in the model picker.
@@ -91,9 +96,10 @@ The assistant only accepts the conversation trees in
 text, e.g. locally.
 
 **Protect the deployment.** The chat endpoint spends these keys and has no
-login of its own. Requests are size-limited and restricted to the listed conversations, but anyone
-who can reach the URL can still send those (there is no rate limit), so keep Vercel Deployment Protection (or another gate) on for any
-deployment that holds real keys.
+login of its own. Requests are size-limited, restricted to the listed conversations, and rate-limited
+at the edge (20 requests / 60 s per IP via Vercel KV). That still leaves the listed conversations
+open to anyone who can reach the URL, so keep Vercel Deployment Protection (or another gate) on for
+any deployment that holds real keys.
 
 ## Tooling notes
 
