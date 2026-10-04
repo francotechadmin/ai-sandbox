@@ -29,7 +29,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from langchain_core.tracers.langchain import wait_for_all_tracers
 from langsmith import Client
-from langsmith.utils import tracing_is_enabled
+from langsmith.utils import get_tracer_project, tracing_is_enabled
 from pydantic import BaseModel, Field, field_validator
 
 from . import prompts, registry
@@ -42,6 +42,7 @@ RECURSION_LIMIT = 15
 
 # A run uploaded just before it is shared can briefly 404.
 SHARE_RETRY_DELAYS = (0.5, 1, 2)  # seconds
+_project_ids: dict[str, str] = {}  # tracing project name -> UUID
 
 # Per-request bounds. The endpoint spends the server's API keys, so a request
 # can't be arbitrarily large (on top of the platform's own body-size limit).
@@ -105,9 +106,13 @@ async def share_trace(run_id: uuid.UUID) -> str | None:
         await asyncio.to_thread(wait_for_all_tracers)  # the run is uploaded in the background
         client = Client()
         runs = await asyncio.to_thread(lambda: client.runs)  # checks the backend version over the network
+        # The v2 endpoint wants the tracing project's UUID, not its name.
+        project = get_tracer_project()
+        if project not in _project_ids:
+            _project_ids[project] = str((await asyncio.to_thread(client.read_project, project_name=project)).id)
         for delay in (*SHARE_RETRY_DELAYS, None):
             try:
-                shared = await runs.share.create(str(run_id), trace_id=str(run_id))
+                shared = await runs.share.create(str(run_id), trace_id=str(run_id), session_id=_project_ids[project])
                 break
             except Exception as err:
                 # a just-uploaded run may not be visible yet

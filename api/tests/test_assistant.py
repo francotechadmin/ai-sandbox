@@ -409,19 +409,29 @@ def test_sharing_is_skipped_when_tracing_is_off(monkeypatch):
 def _fake_langsmith(monkeypatch, create, delays=(0, 0, 0)):
     class FakeClient:
         runs = types.SimpleNamespace(share=types.SimpleNamespace(create=create))
+
+        def read_project(self, *, project_name):
+            assert project_name == "demo-project"
+            return types.SimpleNamespace(id=PROJECT_ID)
+
         _host_url = "https://smith.example"
 
     monkeypatch.setattr(router, "tracing_is_enabled", lambda: True)
+    monkeypatch.setattr(router, "get_tracer_project", lambda: "demo-project")
+    monkeypatch.setattr(router, "_project_ids", {})
     monkeypatch.setattr(router, "wait_for_all_tracers", lambda: None)
     monkeypatch.setattr(router, "Client", FakeClient)
     monkeypatch.setattr(router, "SHARE_RETRY_DELAYS", delays)
+
+
+PROJECT_ID = "0b1e2f3a-0000-4000-8000-000000000001"
 
 
 class NotFound(Exception):
     status_code = 404
 
 
-def test_sharing_uses_the_v2_endpoint_and_builds_the_public_url(monkeypatch):
+def test_sharing_uses_the_v2_endpoint_with_the_project_id_and_builds_the_public_url(monkeypatch):
     calls = []
 
     async def create(run_id, **kw):
@@ -431,7 +441,7 @@ def test_sharing_uses_the_v2_endpoint_and_builds_the_public_url(monkeypatch):
     _fake_langsmith(monkeypatch, create)
     run_id = uuid.uuid4()
     assert asyncio.run(router.share_trace(run_id)) == "https://smith.example/public/tok-1/r"
-    assert calls == [(str(run_id), {"trace_id": str(run_id)})]
+    assert calls == [(str(run_id), {"trace_id": str(run_id), "session_id": PROJECT_ID})]
 
 
 def test_sharing_retries_while_the_run_is_not_found(monkeypatch):
