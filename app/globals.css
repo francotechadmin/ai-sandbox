@@ -1,0 +1,95 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'tw-shimmer';
+
+@theme {
+  --color-bg: #06070c;
+  --color-panel: #0c0e15;
+  --color-panel2: #141722;
+  --color-line: #1c202b;
+  --color-text: #ece9e2;
+  --color-muted-foreground: #8a909c;
+  --color-amber: #e2a545;
+  --color-green: #4fae76;
+  --color-red: #d3654f;
+  --color-danger-bg: #301c1a;
+  --color-danger-line: #4a2a26;
+  --color-tool: #7db3d8;
+
+  /* assistant-ui kit tokens (shadcn names), mapped to the sandbox palette */
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --color-card: var(--color-panel);
+  --color-card-foreground: var(--color-text);
+  --color-popover: var(--color-panel2);
+  --color-popover-foreground: var(--color-text);
+  --color-primary: var(--color-text);
+  --color-primary-foreground: var(--color-bg);
+  --color-secondary: var(--color-panel2);
+  --color-secondary-foreground: var(--color-text);
+  --color-muted: var(--color-panel2);
+  --color-accent: var(--color-panel2);
+  --color-accent-foreground: var(--color-text);
+  --color-destructive: var(--color-red);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-muted);
+
+  /* Landing page */
+  --color-void: #06070c;
+  --color-bone: #ece9e2;
+
+  --font-mono:
+    SF Mono, ui-monospace, JetBrains Mono, Menlo, Consolas, monospace;
+  --font-display:
+    'Geist Variable', -apple-system, BlinkMacSystemFont, Segoe UI, Inter, Roboto, sans-serif;
+  --font-sans:
+    'Geist Variable', -apple-system, BlinkMacSystemFont, Segoe UI, Inter, Roboto, sans-serif;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+  }
+}
+
+/* Landing hero: the headline lands first, then the prompt bar. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.rise {
+  opacity: 0;
+  animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  animation-delay: var(--d, 0s);
+}
+@keyframes blink { 50% { opacity: 0; } }
+.caret { animation: blink 1.05s steps(1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .rise { opacity: 1; animation: none; }
+  .caret { animation: none; }
+}
+
