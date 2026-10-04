@@ -11,12 +11,13 @@
 # development, tests).
 
 import os
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
 ALLOW_ANY_ENV = "ASSISTANT_ALLOW_ANY_PROMPT"
+DEFAULT_CONFIG_DIR = Path(__file__).parent / "config"
 
 
 class Prompt(BaseModel):
@@ -37,24 +38,24 @@ class PromptConfig(BaseModel):
     prompts: list[Prompt]
 
 
-@lru_cache(maxsize=1)
-def get_config() -> PromptConfig:
-    return PromptConfig.model_validate_json((Path(__file__).parent / "config" / "prompts.json").read_text())
+@cache
+def get_config(config_dir: Path = DEFAULT_CONFIG_DIR) -> PromptConfig:
+    return PromptConfig.model_validate_json((config_dir / "prompts.json").read_text())
 
 
 def _normalize(text: str) -> str:
     return " ".join(text.split())
 
 
-def restricted() -> bool:
-    return get_config().restrict and os.environ.get(ALLOW_ANY_ENV) != "1"
+def restricted(config_dir: Path = DEFAULT_CONFIG_DIR) -> bool:
+    return get_config(config_dir).restrict and os.environ.get(ALLOW_ANY_ENV) != "1"
 
 
-def allows(texts: list[str]) -> bool:
+def allows(texts: list[str], config_dir: Path = DEFAULT_CONFIG_DIR) -> bool:
     """Whether these user messages, in order, walk down one of the trees."""
-    if not restricted():
+    if not restricted(config_dir):
         return True
-    choices = get_config().prompts
+    choices = get_config(config_dir).prompts
     for text in texts:
         node = next((p for p in choices if _normalize(p.prompt) == _normalize(text)), None)
         if node is None:

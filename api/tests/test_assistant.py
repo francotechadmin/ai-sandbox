@@ -4,6 +4,7 @@ import types
 import uuid
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from langchain_core.messages import HumanMessage
 
@@ -445,3 +446,61 @@ def test_a_failed_share_is_reported_as_no_trace(monkeypatch):
 
     _fake_langsmith(monkeypatch, create)
     assert asyncio.run(router.share_trace(uuid.uuid4())) is None
+
+
+# -- the router factory ---------------------------------------------------------
+def _agent_client(tmp_path, *, restrict=False):
+    """A second agent: one config directory, mounted by the factory on its own prefix."""
+    (tmp_path / "models.json").write_text(json.dumps({"defaultModel": "demo-fake", "models": []}))
+    (tmp_path / "default_system_prompt.md").write_text("You are the other agent.\n")
+    (tmp_path / "prompts.json").write_text(
+        json.dumps(
+            {
+                "restrict": restrict,
+                "placeholder": "Pick one",
+                "endNote": "Done",
+                "prompts": [{"title": "Hi", "prompt": "Hello other agent", "followUps": []}],
+            }
+        )
+    )
+    app = FastAPI()
+    app.include_router(router.create_router(tmp_path, prefix="/api/other"))
+    return TestClient(app)
+
+
+def _body(text):
+    return {
+        "state": {"messages": []},
+        "commands": [{"type": "add-message", "message": {"role": "user", "parts": [{"type": "text", "text": text}]}}],
+        "settings": {"model": "demo-fake"},
+    }
+
+
+def test_the_default_assistant_is_the_factory_applied_to_the_default_config():
+    assert {r.path for r in router.router.routes} == {"/api/assistant/config", "/api/assistant/chat"}
+    assert client.get("/api/assistant/config").json()["defaultSystemPrompt"] == registry.default_system_prompt()
+
+
+def test_a_factory_router_serves_its_own_config_directory(tmp_path):
+    other = _agent_client(tmp_path)
+    config = other.get("/api/other/config").json()
+    assert config["defaultSystemPrompt"] == "You are the other agent."
+    assert config["placeholder"] == "Pick one"
+    assert [p["prompt"] for p in config["prompts"]] == ["Hello other agent"]
+    assert config["restrictPrompts"] is False
+    assert config["defaultSystemPrompt"] != client.get("/api/assistant/config").json()["defaultSystemPrompt"]
+
+
+def test_a_factory_router_reuses_the_streaming_chat(tmp_path):
+    resp = _agent_client(tmp_path).post("/api/other/chat", json=_body("anything"))
+    assert resp.status_code == 200
+    assert "update-state" in resp.text
+
+
+def test_a_factory_router_enforces_its_own_prompt_tree(tmp_path, monkeypatch):
+    monkeypatch.delenv(prompts.ALLOW_ANY_ENV, raising=False)
+    other = _agent_client(tmp_path, restrict=True)
+    assert other.post("/api/other/chat", json=_body("free text")).status_code == 400
+    assert other.post("/api/other/chat", json=_body("Hello other agent")).status_code == 200
+    # the default assistant's tree is not the other agent's
+    assert other.post("/api/other/chat", json=_body(prompts.get_config().prompts[0].prompt)).status_code == 400
