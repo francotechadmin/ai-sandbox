@@ -9,6 +9,11 @@ dist/
 *.log
 npm-debug.log*
 .vercel
+.agents/
+.claude/
+skills-lock.json
+.agents/
+skills-lock.json
 __pycache__/
 *.pyc
 .venv/
