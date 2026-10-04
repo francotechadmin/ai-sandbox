@@ -29,7 +29,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from langchain_core.tracers.langchain import wait_for_all_tracers
 from langsmith import Client
-from langsmith.utils import LangSmithNotFoundError, tracing_is_enabled
+from langsmith.utils import tracing_is_enabled
 from pydantic import BaseModel, Field, field_validator
 
 from . import prompts, registry
@@ -40,8 +40,8 @@ logger = logging.getLogger("api.assistant")
 
 RECURSION_LIMIT = 15
 
-# LangSmith ingests uploaded runs asynchronously, so a run can briefly 404 right after the flush.
-SHARE_RETRY_DELAYS = (0.5, 1, 2, 3, 4)  # seconds; ~10 s at most before giving up
+# A run uploaded just before it is shared can briefly 404.
+SHARE_RETRY_DELAYS = (0.5, 1, 2)  # seconds
 
 # Per-request bounds. The endpoint spends the server's API keys, so a request
 # can't be arbitrarily large (on top of the platform's own body-size limit).
@@ -90,27 +90,31 @@ def get_config() -> dict[str, Any]:
     }
 
 
-def share_trace(run_id: uuid.UUID) -> str | None:
+async def share_trace(run_id: uuid.UUID) -> str | None:
     """Public LangSmith URL of the run, or None when tracing is off or sharing fails.
 
     Tracing is on when LANGCHAIN_TRACING_V2=true and LANGCHAIN_API_KEY are set.
-    Blocking (network): call it off the event loop. A failure here must never
-    break the chat, so it is logged and reported as "no trace".
+    Uses LangSmith's v2 share endpoint: the old `Client.share_run` (PUT /runs/{id}/share)
+    answers "Run not found" for runs that exist. A failure here must never break the
+    chat, so it is logged and reported as "no trace".
     """
     if not tracing_is_enabled():
         logger.info("trace not shared: tracing is off (set LANGCHAIN_TRACING_V2=true and LANGCHAIN_API_KEY)")
         return None
     try:
-        wait_for_all_tracers()  # the run is uploaded in the background; it must exist before it can be shared
+        await asyncio.to_thread(wait_for_all_tracers)  # the run is uploaded in the background
         client = Client()
+        runs = await asyncio.to_thread(lambda: client.runs)  # checks the backend version over the network
         for delay in (*SHARE_RETRY_DELAYS, None):
             try:
-                url = client.share_run(run_id)
+                shared = await runs.share.create(str(run_id), trace_id=str(run_id))
                 break
-            except LangSmithNotFoundError:
-                if delay is None:
+            except Exception as err:
+                # a just-uploaded run may not be visible yet
+                if delay is None or getattr(err, "status_code", None) != 404:
                     raise
-                time.sleep(delay)
+                await asyncio.sleep(delay)
+        url = f"{client._host_url}/public/{shared.share_token}/r"
         logger.info("trace shared", extra={"run_id": str(run_id), "trace_url": url})
         return url
     except Exception as err:
@@ -189,7 +193,7 @@ async def chat(req: ChatRequest):
                 if controller.is_cancelled:
                     break
                 append_langgraph_event(controller.state, namespace, event_type, chunk)
-            if not controller.is_cancelled and (url := await asyncio.to_thread(share_trace, run_id)):
+            if not controller.is_cancelled and (url := await share_trace(run_id)):
                 controller.state["traceUrl"] = url
         except registry.ModelConfigError as err:
             outcome = "config_error"

@@ -1,4 +1,6 @@
+import asyncio
 import json
+import types
 import uuid
 
 import pytest
@@ -381,46 +383,86 @@ def trace_url(text, **kw):
 
 def test_the_public_trace_url_is_sent_in_the_state(monkeypatch):
     seen = []
-    monkeypatch.setattr(router, "share_trace", lambda run_id: seen.append(run_id) or FAKE_TRACE_URL)
+
+    async def share(run_id):
+        seen.append(run_id)
+        return FAKE_TRACE_URL
+
+    monkeypatch.setattr(router, "share_trace", share)
     assert trace_url("hello") == FAKE_TRACE_URL
     assert len(seen) == 1
 
 
 def test_a_previous_trace_url_is_cleared_when_there_is_no_new_one(monkeypatch):
-    monkeypatch.setattr(router, "share_trace", lambda run_id: None)
+    async def share(run_id):
+        return None
+
+    monkeypatch.setattr(router, "share_trace", share)
     assert trace_url("hello", state={"messages": [], "traceUrl": "https://old.example/trace"}) is None
 
 
 def test_sharing_is_skipped_when_tracing_is_off(monkeypatch):
     monkeypatch.setattr(router, "tracing_is_enabled", lambda: False)
-    assert router.share_trace(uuid.uuid4()) is None
+    assert asyncio.run(router.share_trace(uuid.uuid4())) is None
 
 
-def test_sharing_waits_for_langsmith_to_ingest_the_run(monkeypatch):
-    calls = []
-
+def _fake_langsmith(monkeypatch, create, delays=(0, 0, 0)):
     class FakeClient:
-        def share_run(self, run_id):
-            calls.append(run_id)
-            if len(calls) < 3:
-                raise router.LangSmithNotFoundError("Run not found")
-            return FAKE_TRACE_URL
+        runs = types.SimpleNamespace(share=types.SimpleNamespace(create=create))
+        _host_url = "https://smith.example"
 
     monkeypatch.setattr(router, "tracing_is_enabled", lambda: True)
     monkeypatch.setattr(router, "wait_for_all_tracers", lambda: None)
     monkeypatch.setattr(router, "Client", FakeClient)
-    monkeypatch.setattr(router, "SHARE_RETRY_DELAYS", (0, 0, 0))
-    assert router.share_trace(uuid.uuid4()) == FAKE_TRACE_URL
+    monkeypatch.setattr(router, "SHARE_RETRY_DELAYS", delays)
+
+
+class NotFound(Exception):
+    status_code = 404
+
+
+def test_sharing_uses_the_v2_endpoint_and_builds_the_public_url(monkeypatch):
+    calls = []
+
+    async def create(run_id, **kw):
+        calls.append((run_id, kw))
+        return types.SimpleNamespace(share_token="tok-1")
+
+    _fake_langsmith(monkeypatch, create)
+    run_id = uuid.uuid4()
+    assert asyncio.run(router.share_trace(run_id)) == "https://smith.example/public/tok-1/r"
+    assert calls == [(str(run_id), {"trace_id": str(run_id)})]
+
+
+def test_sharing_retries_while_the_run_is_not_found(monkeypatch):
+    calls = []
+
+    async def create(run_id, **kw):
+        calls.append(run_id)
+        if len(calls) < 3:
+            raise NotFound("Run not found")
+        return types.SimpleNamespace(share_token="tok")
+
+    _fake_langsmith(monkeypatch, create)
+    assert asyncio.run(router.share_trace(uuid.uuid4())) == "https://smith.example/public/tok/r"
     assert len(calls) == 3
 
 
 def test_sharing_gives_up_when_the_run_never_appears(monkeypatch):
-    class FakeClient:
-        def share_run(self, run_id):
-            raise router.LangSmithNotFoundError("Run not found")
+    async def create(run_id, **kw):
+        raise NotFound("Run not found")
 
-    monkeypatch.setattr(router, "tracing_is_enabled", lambda: True)
-    monkeypatch.setattr(router, "wait_for_all_tracers", lambda: None)
-    monkeypatch.setattr(router, "Client", FakeClient)
-    monkeypatch.setattr(router, "SHARE_RETRY_DELAYS", (0, 0))
-    assert router.share_trace(uuid.uuid4()) is None
+    _fake_langsmith(monkeypatch, create, delays=(0, 0))
+    assert asyncio.run(router.share_trace(uuid.uuid4())) is None
+
+
+def test_other_sharing_errors_are_not_retried(monkeypatch):
+    calls = []
+
+    async def create(run_id, **kw):
+        calls.append(run_id)
+        raise PermissionError("forbidden")
+
+    _fake_langsmith(monkeypatch, create)
+    assert asyncio.run(router.share_trace(uuid.uuid4())) is None
+    assert len(calls) == 1
