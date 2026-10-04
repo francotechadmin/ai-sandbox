@@ -72,6 +72,7 @@ test("tool calls render with their input and result, and can be switched off", a
 
 test("markdown is rendered", async ({ page }) => {
   await send(page, "markdown");
+  await idle(page);
   const reply = replies(page).first();
   await expect(reply.locator("h2")).toHaveText("Markdown check");
   await expect(reply.locator("strong")).toHaveText("bold");
