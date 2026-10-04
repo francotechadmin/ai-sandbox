@@ -156,3 +156,12 @@ async def test_search_handles_no_hits_missing_config_and_failures(docs_env, monk
 
     monkeypatch.delenv("UPSTASH_VECTOR_REST_TOKEN")
     assert await tools.search_maintenance_docs.ainvoke({"query": "x"}) == "Error: the document index is not configured."
+
+
+@pytest.mark.asyncio
+async def test_the_bundled_database_is_the_full_dataset(monkeypatch):
+    monkeypatch.delenv("EQUIPMENT_DB_PATH", raising=False)
+    out = await tools.query_equipment_data.ainvoke(
+        {"sql": "SELECT COUNT(*), SUM(machine_failure), SUM(twf), SUM(hdf), SUM(pwf), SUM(osf), SUM(rnf) FROM machines"}
+    )
+    assert out == "[(10000, 339, 46, 115, 95, 98, 19)]"
