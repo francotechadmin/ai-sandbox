@@ -15,14 +15,12 @@
 
 import copy
 import json
-import time
-from threading import Lock
 from typing import Any
 
 from assistant_stream import RunController, create_run
 from assistant_stream.modules.langgraph import append_langgraph_event
 from assistant_stream.serialization import AssistantTransportResponse
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field, field_validator
@@ -41,27 +39,6 @@ MAX_COMMANDS = 10
 MAX_PROMPT_CHARS = 20_000
 MAX_STATE_CHARS = 500_000
 MAX_TOOLS = 10
-
-# Fixed-window rate limit per IP. In-memory, so resets on cold start —
-# acceptable for a sandbox; swap for a shared store in prod.
-RATE_LIMIT_MAX = 20
-RATE_LIMIT_WINDOW = 60  # seconds
-
-_rl_lock = Lock()
-_rl_counts: dict[str, tuple[float, int]] = {}  # ip -> (window_start, count)
-
-
-def _allow_request(ip: str) -> bool:
-    now = time.monotonic()
-    with _rl_lock:
-        start, count = _rl_counts.get(ip, (now, 0))
-        if now - start >= RATE_LIMIT_WINDOW:
-            _rl_counts[ip] = (now, 1)
-            return True
-        if count >= RATE_LIMIT_MAX:
-            return False
-        _rl_counts[ip] = (start, count + 1)
-        return True
 
 
 class Settings(BaseModel):
@@ -122,11 +99,7 @@ def _human_texts(messages: list[Any]) -> list[str]:
 
 
 @router.post("/chat")
-async def chat(req: ChatRequest, request: Request):
-    ip = request.client.host if request.client else "unknown"
-    if not _allow_request(ip):
-        raise HTTPException(status_code=429, detail="Too many requests. Please wait before sending more.")
-
+async def chat(req: ChatRequest):
     user_messages = [
         HumanMessage(content=t) for c in req.commands if c.get("type") == "add-message" and (t := _user_text(c))
     ]
