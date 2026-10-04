@@ -1,4 +1,7 @@
+import asyncio
 import json
+import types
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,6 +9,7 @@ from langchain_core.messages import HumanMessage
 
 from api.assistant import prompts, registry, router
 from api.index import app
+from api.tests.fake_model import FAKE_TRACE_URL
 
 
 @pytest.fixture(autouse=True)
@@ -367,3 +371,77 @@ def test_the_restriction_can_be_switched_off(monkeypatch):
 def test_oversized_state_is_rejected():
     big = {"messages": [{"type": "ai", "content": "x" * (router.MAX_STATE_CHARS + 1)}]}
     assert post_chat("hi", state=big).status_code == 422
+
+
+def trace_url(text, **kw):
+    final, events = chat_events(text, **kw)
+    for event in events:
+        if event["type"] == "update-state":
+            apply_ops(final, event["operations"])
+    return final.get("traceUrl")
+
+
+def test_the_public_trace_url_is_sent_in_the_state(monkeypatch):
+    seen = []
+
+    async def share(run_id):
+        seen.append(run_id)
+        return FAKE_TRACE_URL
+
+    monkeypatch.setattr(router, "share_trace", share)
+    assert trace_url("hello") == FAKE_TRACE_URL
+    assert len(seen) == 1
+
+
+def test_a_previous_trace_url_is_cleared_when_there_is_no_new_one(monkeypatch):
+    async def share(run_id):
+        return None
+
+    monkeypatch.setattr(router, "share_trace", share)
+    assert trace_url("hello", state={"messages": [], "traceUrl": "https://old.example/trace"}) is None
+
+
+def test_sharing_is_skipped_when_tracing_is_off(monkeypatch):
+    monkeypatch.setattr(router, "tracing_is_enabled", lambda: False)
+    assert asyncio.run(router.share_trace(uuid.uuid4())) is None
+
+
+def _fake_langsmith(monkeypatch, create):
+    class FakeClient:
+        runs = types.SimpleNamespace(share=types.SimpleNamespace(create=create))
+
+        def read_project(self, *, project_name):
+            assert project_name == "demo-project"
+            return types.SimpleNamespace(id=PROJECT_ID)
+
+        _host_url = "https://smith.example"
+
+    monkeypatch.setattr(router, "tracing_is_enabled", lambda: True)
+    monkeypatch.setattr(router, "get_tracer_project", lambda: "demo-project")
+    monkeypatch.setattr(router, "_project_ids", {})
+    monkeypatch.setattr(router, "wait_for_all_tracers", lambda: None)
+    monkeypatch.setattr(router, "Client", FakeClient)
+
+
+PROJECT_ID = "0b1e2f3a-0000-4000-8000-000000000001"
+
+
+def test_sharing_uses_the_v2_endpoint_with_the_project_id_and_builds_the_public_url(monkeypatch):
+    calls = []
+
+    async def create(run_id, **kw):
+        calls.append((run_id, kw))
+        return types.SimpleNamespace(share_token="tok-1")
+
+    _fake_langsmith(monkeypatch, create)
+    run_id = uuid.uuid4()
+    assert asyncio.run(router.share_trace(run_id)) == "https://smith.example/public/tok-1/r"
+    assert calls == [(str(run_id), {"trace_id": str(run_id), "session_id": PROJECT_ID})]
+
+
+def test_a_failed_share_is_reported_as_no_trace(monkeypatch):
+    async def create(run_id, **kw):
+        raise PermissionError("forbidden")
+
+    _fake_langsmith(monkeypatch, create)
+    assert asyncio.run(router.share_trace(uuid.uuid4())) is None

@@ -38,5 +38,10 @@ export function convertState(state: ChatState, meta: AssistantTransportConnectio
       metadata: { unstable_state: null, unstable_annotations: [], unstable_data: [], steps: [], custom: {} },
     });
   }
+  // The link goes on the last reply, once the run is over.
+  const last = messages.at(-1);
+  if (state.traceUrl && !meta.isSending && last?.role === "assistant") {
+    messages[messages.length - 1] = { ...last, metadata: { ...last.metadata, custom: { ...last.metadata.custom, traceUrl: state.traceUrl } } };
+  }
   return { messages, isRunning: meta.isSending };
 }

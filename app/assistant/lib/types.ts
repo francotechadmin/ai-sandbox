@@ -3,7 +3,8 @@ import type { LangChainMessage } from "@assistant-ui/react-langgraph";
 // The whole chat is LangChain's own message list (assistant-ui's LangGraph
 // transport pattern). It lives in the browser and is sent back with every
 // request, so the backend stays stateless.
-export type ChatState = { messages: LangChainMessage[] };
+// `traceUrl` is the public LangSmith trace of the last turn (null when tracing is off).
+export type ChatState = { messages: LangChainMessage[]; traceUrl?: string | null };
 
 type ModelInfo = {
   id: string;

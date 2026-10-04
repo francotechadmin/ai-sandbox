@@ -13,10 +13,12 @@
 # accepted (unknown model, missing API key, provider errors) are sent as an
 # error in the stream.
 
+import asyncio
 import copy
 import json
 import logging
 import time
+import uuid
 from typing import Any
 
 from assistant_stream import RunController, create_run
@@ -25,6 +27,9 @@ from assistant_stream.serialization import AssistantTransportResponse
 from fastapi import APIRouter, HTTPException
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
+from langchain_core.tracers.langchain import wait_for_all_tracers
+from langsmith import Client
+from langsmith.utils import get_tracer_project, tracing_is_enabled
 from pydantic import BaseModel, Field, field_validator
 
 from . import prompts, registry
@@ -34,6 +39,8 @@ router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 logger = logging.getLogger("api.assistant")
 
 RECURSION_LIMIT = 15
+
+_project_ids: dict[str, str] = {}  # tracing project name -> UUID
 
 # Per-request bounds. The endpoint spends the server's API keys, so a request
 # can't be arbitrarily large (on top of the platform's own body-size limit).
@@ -80,6 +87,34 @@ def get_config() -> dict[str, Any]:
         "restrictPrompts": prompts.restricted(),
         **prompts.get_config().model_dump(exclude={"restrict"}),
     }
+
+
+async def share_trace(run_id: uuid.UUID) -> str | None:
+    """Public LangSmith URL of the run, or None when tracing is off or sharing fails.
+
+    Tracing is on when LANGCHAIN_TRACING_V2=true and LANGCHAIN_API_KEY are set.
+    Uses LangSmith's v2 share endpoint: the old `Client.share_run` (PUT /runs/{id}/share)
+    answers "Run not found" for runs that exist. A failure here must never break the
+    chat, so it is logged and reported as "no trace".
+    """
+    if not tracing_is_enabled():
+        logger.info("trace not shared: tracing is off (set LANGCHAIN_TRACING_V2=true and LANGCHAIN_API_KEY)")
+        return None
+    try:
+        await asyncio.to_thread(wait_for_all_tracers)  # the run is uploaded in the background
+        client = Client()
+        runs = await asyncio.to_thread(lambda: client.runs)  # checks the backend version over the network
+        # The v2 endpoint wants the tracing project's UUID, not its name.
+        project = get_tracer_project()
+        if project not in _project_ids:
+            _project_ids[project] = str((await asyncio.to_thread(client.read_project, project_name=project)).id)
+        shared = await runs.share.create(str(run_id), trace_id=str(run_id), session_id=_project_ids[project])
+        url = f"{client._host_url}/public/{shared.share_token}/r"
+        logger.info("trace shared", extra={"run_id": str(run_id), "trace_url": url})
+        return url
+    except Exception as err:
+        logger.warning("could not share trace %s: %s: %s", run_id, type(err).__name__, err, exc_info=True)
+        return None
 
 
 def _user_text(command: dict[str, Any]) -> str:
@@ -136,6 +171,8 @@ async def chat(req: ChatRequest):
             controller.state["messages"] = []
         for message in user_messages:
             controller.state["messages"].append(message.model_dump())
+        controller.state["traceUrl"] = None  # the state is echoed back by the browser: drop the previous turn's link
+        run_id = uuid.uuid4()
 
         try:
             model = registry.build_model(registry.get_spec(req.settings.model))
@@ -144,13 +181,15 @@ async def chat(req: ChatRequest):
             # message list, and the stream is folded into it by the library.
             async for namespace, event_type, chunk in agent.astream(
                 {"messages": [*history, *user_messages]},
-                config={"recursion_limit": RECURSION_LIMIT},
+                config={"recursion_limit": RECURSION_LIMIT, "run_id": run_id},
                 stream_mode=["messages", "updates"],
                 subgraphs=True,
             ):
                 if controller.is_cancelled:
                     break
                 append_langgraph_event(controller.state, namespace, event_type, chunk)
+            if not controller.is_cancelled and (url := await share_trace(run_id)):
+                controller.state["traceUrl"] = url
         except registry.ModelConfigError as err:
             outcome = "config_error"
             logger.warning("chat config error: %s", err)

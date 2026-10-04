@@ -701,8 +701,26 @@ const AssistantMessage: FC = () => {
       >
         <BranchPicker />
         <AssistantActionBar />
+        <TraceLink />
       </div>
     </MessagePrimitive.Root>
+  );
+};
+
+// LOCAL EDIT: the public LangSmith trace of the reply, when the backend sent one (see convert.ts).
+const TraceLink: FC = () => {
+  const traceUrl = useAuiState((s) => s.message.metadata.custom.traceUrl);
+  if (typeof traceUrl !== "string") return null;
+  return (
+    <a
+      href={traceUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-slot="aui_trace-link"
+      className="text-muted-foreground hover:text-foreground ms-2 text-xs underline-offset-2 hover:underline"
+    >
+      View trace →
+    </a>
   );
 };
 

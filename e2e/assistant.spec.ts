@@ -81,6 +81,21 @@ test("markdown is rendered", async ({ page }) => {
   await expect(reply.locator("table")).toContainText("GPT-6 Luna");
 });
 
+test("a link to the public trace appears under the last reply, and only there", async ({ page }) => {
+  const trace = slot(page, "aui_trace-link");
+  await send(page, "hello");
+  await idle(page);
+  await expect(trace).toHaveCount(1);
+  await expect(trace).toHaveText("View trace →");
+  await expect(trace).toHaveAttribute("href", /smith\.langchain\.com\/public\//);
+
+  await send(page, "hi again");
+  await idle(page);
+  await expect(replies(page)).toHaveCount(2);
+  await expect(trace).toHaveCount(1);
+  await expect(replies(page).last().locator('[data-slot="aui_trace-link"]')).toHaveCount(1);
+});
+
 test("a model failure is shown on the message", async ({ page }) => {
   await send(page, "boom");
   await expect(page.locator(".aui-message-error-root")).toContainText("scripted failure");

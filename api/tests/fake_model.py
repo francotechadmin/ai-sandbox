@@ -124,6 +124,8 @@ class ScriptedChatModel(BaseChatModel):
 
 
 FAKE_MODEL_ID = "demo-fake"
+# Sharing a trace needs LangSmith, which the fake model has no trace in: tests and serve_fake "share" this URL.
+FAKE_TRACE_URL = "https://smith.langchain.com/public/fake-trace/r"
 
 
 def register_fake_model() -> None:
