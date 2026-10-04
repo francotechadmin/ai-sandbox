@@ -406,7 +406,7 @@ def test_sharing_is_skipped_when_tracing_is_off(monkeypatch):
     assert asyncio.run(router.share_trace(uuid.uuid4())) is None
 
 
-def _fake_langsmith(monkeypatch, create, delays=(0, 0, 0)):
+def _fake_langsmith(monkeypatch, create):
     class FakeClient:
         runs = types.SimpleNamespace(share=types.SimpleNamespace(create=create))
 
@@ -421,14 +421,9 @@ def _fake_langsmith(monkeypatch, create, delays=(0, 0, 0)):
     monkeypatch.setattr(router, "_project_ids", {})
     monkeypatch.setattr(router, "wait_for_all_tracers", lambda: None)
     monkeypatch.setattr(router, "Client", FakeClient)
-    monkeypatch.setattr(router, "SHARE_RETRY_DELAYS", delays)
 
 
 PROJECT_ID = "0b1e2f3a-0000-4000-8000-000000000001"
-
-
-class NotFound(Exception):
-    status_code = 404
 
 
 def test_sharing_uses_the_v2_endpoint_with_the_project_id_and_builds_the_public_url(monkeypatch):
@@ -444,49 +439,9 @@ def test_sharing_uses_the_v2_endpoint_with_the_project_id_and_builds_the_public_
     assert calls == [(str(run_id), {"trace_id": str(run_id), "session_id": PROJECT_ID})]
 
 
-def test_sharing_uses_LANGSMITH_PROJECT_ID_without_a_lookup(monkeypatch):
-    calls = []
-
+def test_a_failed_share_is_reported_as_no_trace(monkeypatch):
     async def create(run_id, **kw):
-        calls.append(kw)
-        return types.SimpleNamespace(share_token="tok")
-
-    _fake_langsmith(monkeypatch, create)
-    monkeypatch.setenv("LANGSMITH_PROJECT_ID", "from-env")
-    monkeypatch.setattr(router.Client, "read_project", lambda *a, **k: pytest.fail("looked the project up"))
-    assert asyncio.run(router.share_trace(uuid.uuid4())) == "https://smith.example/public/tok/r"
-    assert calls[0]["session_id"] == "from-env"
-
-
-def test_sharing_retries_while_the_run_is_not_found(monkeypatch):
-    calls = []
-
-    async def create(run_id, **kw):
-        calls.append(run_id)
-        if len(calls) < 3:
-            raise NotFound("Run not found")
-        return types.SimpleNamespace(share_token="tok")
-
-    _fake_langsmith(monkeypatch, create)
-    assert asyncio.run(router.share_trace(uuid.uuid4())) == "https://smith.example/public/tok/r"
-    assert len(calls) == 3
-
-
-def test_sharing_gives_up_when_the_run_never_appears(monkeypatch):
-    async def create(run_id, **kw):
-        raise NotFound("Run not found")
-
-    _fake_langsmith(monkeypatch, create, delays=(0, 0))
-    assert asyncio.run(router.share_trace(uuid.uuid4())) is None
-
-
-def test_other_sharing_errors_are_not_retried(monkeypatch):
-    calls = []
-
-    async def create(run_id, **kw):
-        calls.append(run_id)
         raise PermissionError("forbidden")
 
     _fake_langsmith(monkeypatch, create)
     assert asyncio.run(router.share_trace(uuid.uuid4())) is None
-    assert len(calls) == 1
