@@ -20,7 +20,9 @@ export function initialSettings(config: AssistantConfig): Settings {
     const known = new Set(config.models.map((m) => m.id));
     return {
       model: saved.model && known.has(saved.model) ? saved.model : fallback.model,
-      systemPrompt: typeof saved.systemPrompt === "string" ? saved.systemPrompt : fallback.systemPrompt,
+      // Locked servers always use their own default, whatever was saved.
+      systemPrompt:
+        typeof saved.systemPrompt === "string" && !config.restrictPrompts ? saved.systemPrompt : fallback.systemPrompt,
       tools: Array.isArray(saved.tools)
         ? saved.tools.filter((t) => config.tools.some((c) => c.name === t))
         : fallback.tools,

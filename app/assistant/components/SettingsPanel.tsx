@@ -19,6 +19,7 @@ export function SettingsPanel({
   className?: string;
 }) {
   const label = "text-[13px] font-medium text-text/80";
+  const locked = config.restrictPrompts; // the server uses its own system prompt
 
   return (
     <aside className={`h-full min-h-0 flex-col gap-5 overflow-y-auto border-l border-line bg-panel p-5 ${className}`} data-testid="settings">
@@ -83,21 +84,26 @@ export function SettingsPanel({
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <label className={label} htmlFor="system-prompt">System prompt</label>
-          <button
-            onClick={() => onChange({ ...settings, systemPrompt: config.defaultSystemPrompt })}
-            className="text-[12px] text-muted-foreground underline underline-offset-2 hover:text-text"
-          >
-            Reset
-          </button>
+          {!locked && (
+            <button
+              onClick={() => onChange({ ...settings, systemPrompt: config.defaultSystemPrompt })}
+              className="text-[12px] text-muted-foreground underline underline-offset-2 hover:text-text"
+            >
+              Reset
+            </button>
+          )}
         </div>
         <textarea
           id="system-prompt"
           value={settings.systemPrompt}
           onChange={(e) => onChange({ ...settings, systemPrompt: e.target.value })}
+          readOnly={locked}
           placeholder="No system prompt — the model gets only your messages."
-          className="min-h-[140px] flex-1 resize-none rounded-xl border border-line bg-panel2 px-3 py-2.5 text-base leading-relaxed outline-hidden transition-colors focus:border-white/30 lg:text-[14px]"
+          className={`min-h-[140px] flex-1 resize-none rounded-xl border border-line bg-panel2 px-3 py-2.5 text-base leading-relaxed outline-hidden transition-colors focus:border-white/30 lg:text-[14px] ${locked ? "cursor-not-allowed text-muted-foreground" : ""}`}
         />
-        <p className="text-[12px] text-muted-foreground">Applies to your next message. Stored in this browser only.</p>
+        <p className="text-[12px] text-muted-foreground">
+          {locked ? "Locked for this demo." : "Applies to your next message. Stored in this browser only."}
+        </p>
       </div>
     </aside>
   );

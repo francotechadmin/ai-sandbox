@@ -112,7 +112,9 @@ async def chat(req: ChatRequest):
     if not prompts.allows(sent):
         raise HTTPException(status_code=400, detail="Only the suggested prompts can be sent, in order.")
     history = copy.deepcopy(state.get("messages", []))  # the run mutates the shared state below
-    system_prompt = req.settings.systemPrompt.strip()
+    # When prompts are restricted the system prompt is too: the editable one in
+    # the request is ignored in favor of the server's default.
+    system_prompt = (registry.default_system_prompt() if prompts.restricted() else req.settings.systemPrompt).strip()
 
     async def run(controller: RunController) -> None:
         if "messages" not in controller.state:

@@ -30,12 +30,16 @@ rendered as it happens.
   funny placeholder shown in the disabled input bar. The UI offers only the
   next choices; the **server** rejects any conversation that doesn't walk down
   one of the trees exactly (replayed history included), so a hand-made request
-  can't get around it. Edit the file to change the conversations. Set
+  can't get around it. The system prompt is locked the same way: the server
+  ignores the one in the request and uses `default_system_prompt.md`, and the
+  settings panel shows it read-only. Edit `prompts.json` to change the
+  conversations. Set
   `"restrict": false` in it, or `ASSISTANT_ALLOW_ANY_PROMPT=1` in the
   environment (used by the tests and handy locally), to allow free text. The
   landing page's typing animation reads the same file.
 - **No hardcoded prompts** — the system prompt, model and
-  enabled tools are sent with every request from the settings panel. The only
+  enabled tools are sent with every request from the settings panel (unless
+  locked, see above). The only
   prompt text in the repo is the editable starting value in
   `api/assistant/config/default_system_prompt.md`; "Reset" restores it.
   Settings are stored in the browser (`localStorage`).

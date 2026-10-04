@@ -113,6 +113,9 @@ test("when restricted, the input bar is locked and conversations walk down the p
   await page.reload();
   await expect(composer(page)).toBeDisabled();
   await expect(composer(page)).toHaveAttribute("placeholder", /token shortage/);
+  // the system prompt is locked too: readable, not editable, no reset
+  await expect(page.locator("#system-prompt")).toHaveAttribute("readonly", "");
+  await expect(page.getByRole("button", { name: "Reset" })).toHaveCount(0);
 
   const chip = (name: string | RegExp) => page.getByRole("button", { name });
   await chip(/Do some math/).click();
