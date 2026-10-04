@@ -73,17 +73,18 @@ _WMO = {
 }
 
 
-def _get_json(url: str, params: dict) -> dict:
-    response = httpx.get(url, params=params, timeout=10)
-    response.raise_for_status()
-    return response.json()
+async def _get_json(url: str, params: dict) -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        return response.json()
 
 
-def _find_place(location: str) -> dict | None:
+async def _find_place(location: str) -> dict | None:
     # The geocoder matches on the place name only, so "Houston, TX" is searched
     # as "Houston" and the rest ("TX", "Texas", "US") is used to pick a result.
     name, _, hint = (part.strip() for part in location.partition(","))
-    results = _get_json(_GEOCODE_URL, {"name": name, "count": 10, "language": "en"}).get("results") or []
+    results = (await _get_json(_GEOCODE_URL, {"name": name, "count": 10, "language": "en"})).get("results") or []
     if hint:
         h = hint.lower()
         for r in results:
@@ -93,17 +94,17 @@ def _find_place(location: str) -> dict | None:
 
 
 @tool
-def get_weather(location: str, units: str = "fahrenheit") -> str:
+async def get_weather(location: str, units: str = "fahrenheit") -> str:
     """Get current weather and today's high/low for a place, e.g. 'Houston, TX' or 'Paris, France'.
     units is 'fahrenheit' (default) or 'celsius'."""
     unit = units.lower()
     if unit not in ("fahrenheit", "celsius"):
         return "Error: units must be 'fahrenheit' or 'celsius'."
     try:
-        place = _find_place(location)
+        place = await _find_place(location)
         if place is None:
             return f"Error: could not find a place called '{location}'."
-        data = _get_json(
+        data = await _get_json(
             _FORECAST_URL,
             {
                 "latitude": place["latitude"],

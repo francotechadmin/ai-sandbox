@@ -115,7 +115,8 @@ def list_models() -> list[ModelSpec]:
 
 def default_model_id() -> str:
     ids = [m.id for m in list_models()]
-    return _load().default_model if _load().default_model in ids else ids[0]
+    default = _load().default_model
+    return default if default in ids else ids[0]
 
 
 def get_spec(model_id: str | None) -> ModelSpec:

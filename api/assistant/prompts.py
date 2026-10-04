@@ -38,7 +38,7 @@ class PromptConfig(BaseModel):
 
 
 @lru_cache(maxsize=1)
-def _load() -> PromptConfig:
+def get_config() -> PromptConfig:
     return PromptConfig.model_validate_json((Path(__file__).parent / "config" / "prompts.json").read_text())
 
 
@@ -46,19 +46,15 @@ def _normalize(text: str) -> str:
     return " ".join(text.split())
 
 
-def get_config() -> PromptConfig:
-    return _load()
-
-
 def restricted() -> bool:
-    return _load().restrict and os.environ.get(ALLOW_ANY_ENV) != "1"
+    return get_config().restrict and os.environ.get(ALLOW_ANY_ENV) != "1"
 
 
 def allows(texts: list[str]) -> bool:
     """Whether these user messages, in order, walk down one of the trees."""
     if not restricted():
         return True
-    choices = _load().prompts
+    choices = get_config().prompts
     for text in texts:
         node = next((p for p in choices if _normalize(p.prompt) == _normalize(text)), None)
         if node is None:

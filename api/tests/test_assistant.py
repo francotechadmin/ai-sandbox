@@ -201,12 +201,13 @@ def test_calculator_is_safe_and_correct():
     assert calculator.invoke({"expression": "'a' * 3"}).startswith("Error")
 
 
-def test_weather_formats_forecast_and_picks_place_by_hint(monkeypatch):
+@pytest.mark.asyncio
+async def test_weather_formats_forecast_and_picks_place_by_hint(monkeypatch):
     from api.assistant import tools
 
     seen = []
 
-    def fake_get_json(url, params):
+    async def fake_get_json(url, params):
         seen.append((url, params))
         if url == tools._GEOCODE_URL:
             return {
@@ -243,25 +244,29 @@ def test_weather_formats_forecast_and_picks_place_by_hint(monkeypatch):
         }
 
     monkeypatch.setattr(tools, "_get_json", fake_get_json)
-    out = tools.get_weather.invoke({"location": "Houston, Texas"})
+    out = await tools.get_weather.ainvoke({"location": "Houston, Texas"})
     assert out.startswith("Houston, Texas, United States: partly cloudy, 88.1°F")
     assert "high 91.0°F, low 76.5°F" in out and "mph" in out
     assert seen[0][1]["name"] == "Houston"  # hint is not sent to the geocoder
     assert seen[1][1]["latitude"] == 29.76  # and it picked the Texas result
 
 
-def test_weather_errors_are_returned_not_raised(monkeypatch):
+@pytest.mark.asyncio
+async def test_weather_errors_are_returned_not_raised(monkeypatch):
     from api.assistant import tools
 
-    monkeypatch.setattr(tools, "_get_json", lambda url, params: {})
-    assert tools.get_weather.invoke({"location": "Nowhereville"}).startswith("Error: could not find")
-    assert tools.get_weather.invoke({"location": "x", "units": "kelvin"}).startswith("Error: units")
+    async def empty(_url, _params):
+        return {}
 
-    def boom(url, params):
+    monkeypatch.setattr(tools, "_get_json", empty)
+    assert (await tools.get_weather.ainvoke({"location": "Nowhereville"})).startswith("Error: could not find")
+    assert (await tools.get_weather.ainvoke({"location": "x", "units": "kelvin"})).startswith("Error: units")
+
+    async def boom(_url, _params):
         raise OSError("offline")
 
     monkeypatch.setattr(tools, "_get_json", boom)
-    assert "weather lookup failed" in tools.get_weather.invoke({"location": "Paris"})
+    assert "weather lookup failed" in await tools.get_weather.ainvoke({"location": "Paris"})
 
 
 # --- prompt restriction ---------------------------------------------------
