@@ -135,9 +135,9 @@ async def get_weather(location: str, units: str = "fahrenheit") -> str:
 TOOLS: dict[str, BaseTool] = {t.name: t for t in (get_current_time, calculator, get_weather)}
 
 
-def describe_tools() -> list[dict[str, str]]:
-    return [{"name": t.name, "description": (t.description or "").strip()} for t in TOOLS.values()]
+def describe_tools(available: dict[str, BaseTool] = TOOLS) -> list[dict[str, str]]:
+    return [{"name": t.name, "description": (t.description or "").strip()} for t in available.values()]
 
 
-def select_tools(names: list[str] | None) -> list[BaseTool]:
-    return [TOOLS[n] for n in (names or []) if n in TOOLS]
+def select_tools(names: list[str] | None, available: dict[str, BaseTool] = TOOLS) -> list[BaseTool]:
+    return [available[n] for n in (names or []) if n in available]

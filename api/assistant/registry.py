@@ -1,6 +1,6 @@
-# Model registry for the assistant. The list of models lives in
-# config/models.json, not in code: add or change a model by editing that file
-# (it is validated against the schemas below).
+# Model registry shared by every agent. An agent's list of models lives in
+# <its config dir>/models.json (falling back to the assistant's), not in code:
+# add or change a model by editing that file (it is validated against the schemas below).
 #
 # Reasoning is always on for a model that has a `reasoning` entry. How it is
 # switched on differs per provider, so each provider turns the entry into its
@@ -13,7 +13,7 @@
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +23,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+# The assistant's config; also the fallback for an agent without its own models.json.
 CONFIG_DIR = Path(__file__).parent / "config"
 
 
@@ -99,29 +100,30 @@ def register_model(spec: ModelSpec, provider: Provider) -> None:
     _extra_models.append(spec)
 
 
-@lru_cache(maxsize=1)
-def _load() -> _Models:
-    return _Models.model_validate_json((CONFIG_DIR / "models.json").read_text())
+@cache
+def _load(config_dir: Path) -> _Models:
+    path = config_dir / "models.json"
+    return _Models.model_validate_json((path if path.exists() else CONFIG_DIR / "models.json").read_text())
 
 
-def default_system_prompt() -> str:
-    path = CONFIG_DIR / "default_system_prompt.md"
+def default_system_prompt(config_dir: Path = CONFIG_DIR) -> str:
+    path = config_dir / "default_system_prompt.md"
     return path.read_text().strip() if path.exists() else ""
 
 
-def list_models() -> list[ModelSpec]:
-    return [*_load().models, *_extra_models]
+def list_models(config_dir: Path = CONFIG_DIR) -> list[ModelSpec]:
+    return [*_load(config_dir).models, *_extra_models]
 
 
-def default_model_id() -> str:
-    ids = [m.id for m in list_models()]
-    default = _load().default_model
+def default_model_id(config_dir: Path = CONFIG_DIR) -> str:
+    ids = [m.id for m in list_models(config_dir)]
+    default = _load(config_dir).default_model
     return default if default in ids else ids[0]
 
 
-def get_spec(model_id: str | None) -> ModelSpec:
-    wanted = model_id or default_model_id()
-    for spec in list_models():
+def get_spec(model_id: str | None, config_dir: Path = CONFIG_DIR) -> ModelSpec:
+    wanted = model_id or default_model_id(config_dir)
+    for spec in list_models(config_dir):
         if spec.id == wanted:
             return spec
     raise ModelConfigError(f"Unknown model '{wanted}'.")
