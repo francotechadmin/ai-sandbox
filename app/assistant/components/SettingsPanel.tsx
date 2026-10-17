@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
+import { XIcon, PlusIcon } from "lucide-react";
 import type { AssistantConfig, Settings } from "../lib/types";
 
 export function SettingsPanel({
@@ -9,103 +9,119 @@ export function SettingsPanel({
   onChange,
   onNewChat,
   onClose,
-  className = "",
+  isOpen,
 }: {
   config: AssistantConfig;
   settings: Settings;
   onChange: (next: Settings) => void;
   onNewChat: () => void;
   onClose: () => void;
-  className?: string;
+  isOpen: boolean;
 }) {
+  if (!isOpen) return null;
+
   const label = "text-[13px] font-medium text-text/80";
-  const locked = config.restrictPrompts; // the server uses its own system prompt
+  const locked = config.restrictPrompts;
+
   return (
-    <aside className={`h-full min-h-0 flex-col gap-5 overflow-y-auto border-l border-line bg-panel p-5 ${className}`} data-testid="settings">
-      <button
-        type="button"
+    <>
+      <div
+        className="fixed inset-0 z-20 bg-black/50"
         onClick={onClose}
-        className="rounded-full bg-text px-4 py-2 text-[14px] font-semibold text-bg lg:hidden"
-      >
-        Done
-      </button>
-      <button
-        onClick={onNewChat}
-        className="flex items-center justify-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[14px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
-        data-testid="new-chat"
-      >
-        <PlusIcon className="size-4" />
-        New chat
-      </button>
-
-      <div className="flex flex-col gap-1.5">
-        <label className={label} htmlFor="model">Model</label>
-        <select
-          id="model"
-          value={settings.model}
-          onChange={(e) => onChange({ ...settings, model: e.target.value })}
-          className="rounded-xl border border-line bg-panel2 px-3 py-2 text-base outline-hidden transition-colors focus:border-white/30 lg:text-[14px]"
+        aria-hidden
+      />
+      <div className="fixed inset-0 z-30 flex items-center justify-center p-4">
+        <div
+          className="flex w-full max-w-sm flex-col gap-5 overflow-y-auto rounded-2xl border border-line bg-panel p-5"
+          style={{ maxHeight: "85dvh" }}
+          data-testid="settings"
         >
-          {config.models.map((m) => (
-            <option key={m.id} value={m.id} disabled={!m.available}>
-              {m.label}
-              {m.available ? "" : " — no API key"}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <fieldset className="flex flex-col gap-1.5">
-        <legend className={label}>Tools</legend>
-        {config.tools.map((t) => (
-          <label key={t.name} className="flex items-start gap-2.5 text-[14px]">
-            <input
-              type="checkbox"
-              checked={settings.tools.includes(t.name)}
-              onChange={(e) =>
-                onChange({
-                  ...settings,
-                  tools: e.target.checked
-                    ? [...settings.tools, t.name]
-                    : settings.tools.filter((n) => n !== t.name),
-                })
-              }
-              className="mt-0.5 h-4 w-4 accent-text"
-            />
-            <span>
-              <span className="font-mono text-[12px]">{t.name}</span>
-              <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">{t.description}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
-
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <label className={label} htmlFor="system-prompt">System prompt</label>
-          {!locked && (
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-semibold">Settings</span>
             <button
-              onClick={() => onChange({ ...settings, systemPrompt: config.defaultSystemPrompt })}
-              className="text-[12px] text-muted-foreground underline underline-offset-2 hover:text-text"
+              type="button"
+              onClick={onClose}
+              className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-text"
+              aria-label="Close settings"
             >
-              Reset
+              <XIcon className="size-4" />
             </button>
-          )}
+          </div>
+
+          <button
+            onClick={onNewChat}
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-white/15 px-4 py-2 text-[14px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
+            data-testid="new-chat"
+          >
+            <PlusIcon className="size-4" />
+            New chat
+          </button>
+
+          <div className="flex flex-col gap-1.5">
+            <label className={label} htmlFor="model">Model</label>
+            <select
+              id="model"
+              value={settings.model}
+              onChange={(e) => onChange({ ...settings, model: e.target.value })}
+              className="rounded-xl border border-line bg-panel2 px-3 py-2 text-[14px] outline-hidden transition-colors focus:border-white/30"
+            >
+              {config.models.map((m) => (
+                <option key={m.id} value={m.id} disabled={!m.available}>
+                  {m.label}
+                  {m.available ? "" : " — no API key"}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className={label}>Tools</legend>
+            {config.tools.map((t) => (
+              <label key={t.name} className="flex cursor-default items-start gap-2.5 text-[14px] select-none">
+                <input
+                  type="checkbox"
+                  checked={settings.tools.includes(t.name)}
+                  onChange={() => {}}
+                  tabIndex={-1}
+                  className="pointer-events-none mt-0.5 h-4 w-4 accent-text"
+                  aria-readonly="true"
+                />
+                <span>
+                  <span className="font-mono text-[12px]">{t.name}</span>
+                  <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">{t.description}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className={label} htmlFor="system-prompt">System prompt</label>
+              {!locked && (
+                <button
+                  onClick={() => onChange({ ...settings, systemPrompt: config.defaultSystemPrompt })}
+                  className="text-[12px] text-muted-foreground underline underline-offset-2 hover:text-text"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+            <textarea
+              id="system-prompt"
+              value={settings.systemPrompt}
+              onChange={(e) => onChange({ ...settings, systemPrompt: e.target.value })}
+              readOnly={locked}
+              placeholder="No system prompt — the model gets only your messages."
+              rows={1}
+              style={{ fieldSizing: "content" } as React.CSSProperties}
+              className={`resize-none rounded-xl border border-line bg-panel2 px-3 py-2.5 text-[14px] leading-relaxed outline-hidden transition-colors focus:border-white/30 ${locked ? "cursor-not-allowed text-muted-foreground" : ""}`}
+            />
+            <p className="text-[12px] text-muted-foreground">
+              {locked ? "Locked for this demo." : "Applies to your next message. Stored in this browser only."}
+            </p>
+          </div>
         </div>
-        <textarea
-          id="system-prompt"
-          value={settings.systemPrompt}
-          onChange={(e) => onChange({ ...settings, systemPrompt: e.target.value })}
-          readOnly={locked}
-          placeholder="No system prompt — the model gets only your messages."
-          rows={1}
-          style={{ fieldSizing: "content" } as React.CSSProperties}
-          className={`resize-none rounded-xl border border-line bg-panel2 px-3 py-2.5 text-base leading-relaxed outline-hidden transition-colors focus:border-white/30 lg:text-[14px] ${locked ? "cursor-not-allowed text-muted-foreground" : ""}`}
-        />
-        <p className="text-[12px] text-muted-foreground">
-          {locked ? "Locked for this demo." : "Applies to your next message. Stored in this browser only."}
-        </p>
       </div>
-    </aside>
+    </>
   );
 }

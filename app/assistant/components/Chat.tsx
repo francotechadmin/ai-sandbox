@@ -24,7 +24,7 @@ const components: ThreadComponents = {
   ReasoningGroup: ({ group, children }) => {
     const running = group.status.type === "running";
     return (
-      <ReasoningRoot variant="ghost" streaming={running}>
+      <ReasoningRoot variant="ghost" streaming={running} defaultOpen>
         <ReasoningTrigger active={running} />
         <ReasoningContent aria-busy={running}>
           <ReasoningText>{children}</ReasoningText>

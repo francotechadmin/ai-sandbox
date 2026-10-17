@@ -35,9 +35,15 @@
   --color-input: var(--color-line);
   --color-ring: var(--color-muted);
 
-  /* Landing page */
+  /* Landing page — dark hero */
   --color-void: #06070c;
   --color-bone: #ece9e2;
+
+  /* Landing page — light theme */
+  --color-paper: #fafaf8;
+  --color-ink: #0f0f0e;
+  --color-ink-muted: #6b6b67;
+  --color-line-light: #e4e4e0;
 
   --font-mono:
     SF Mono, ui-monospace, JetBrains Mono, Menlo, Consolas, monospace;
@@ -75,6 +81,13 @@
     @apply bg-bg text-text font-sans antialiased;
   }
 }
+
+/* Dark app shell: thin unobtrusive scrollbars throughout */
+.aui-app *::-webkit-scrollbar { width: 4px; height: 4px; }
+.aui-app *::-webkit-scrollbar-track { background: transparent; }
+.aui-app *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 9999px; }
+.aui-app *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+.aui-app * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent; }
 
 /* Landing hero: the headline lands first, then the prompt bar. */
 @keyframes rise {
