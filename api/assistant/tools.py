@@ -21,9 +21,11 @@ simpleeval.MAX_POWER = 1_000
 @tool
 def calculator(expression: str) -> str:
     """Evaluate an arithmetic expression, e.g. '(12 + 8) * 3 / 4'."""
+    # ^ is bitwise XOR in Python; models often use it for exponentiation.
+    expression = expression.replace("^", "**")
     try:
         result = simple_eval(expression)
-    except (InvalidExpression, SyntaxError, ArithmeticError) as err:
+    except (InvalidExpression, SyntaxError, ArithmeticError, TypeError) as err:
         return f"Error: {err}"
     if isinstance(result, bool) or not isinstance(result, int | float):
         return "Error: the expression must evaluate to a number."

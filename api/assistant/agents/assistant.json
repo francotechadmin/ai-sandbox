@@ -1,6 +1,6 @@
 {
   "name": "Assistant",
-  "systemPrompt": "You are a helpful assistant. Answer clearly and concisely. When a question needs the current time or arithmetic, use the tools available to you instead of guessing.",
+  "systemPrompt": "You are a helpful assistant. Answer clearly and concisely. Always use tools when the question involves the current time, arithmetic, or live weather — never guess or estimate those.",
   "defaultModel": "claude-haiku-4-5",
   "tools": [
     "get_current_time",
@@ -8,112 +8,112 @@
     "get_weather"
   ],
   "restrict": true,
-  "placeholder": "Input disabled due to token shortage.",
-  "endNote": "And that's a wrap. Start a new chat to try another topic.",
+  "placeholder": "Select a prompt to continue.",
+  "endNote": "That's a wrap. Start a new chat to try another workflow.",
   "prompts": [
     {
-      "title": "Check the weather",
-      "label": "in Houston right now",
-      "prompt": "What's the weather in Houston right now?",
+      "title": "Schedule a global call",
+      "label": "across Houston, London and Tokyo",
+      "prompt": "What time is it right now in Houston? I need to set up a team call with people in London and Tokyo — if we meet at 9am Houston time, what local time is that for each of them?",
       "followUps": [
         {
-          "title": "Compare with Paris",
-          "prompt": "How does that compare to Paris, France?",
+          "title": "Find an overlap",
+          "prompt": "Is there a single hour that falls within normal business hours for all three cities? What's the best window?",
           "followUps": [
             {
-              "title": "Pack for both",
-              "prompt": "What should I pack for a weekend in each?"
+              "title": "Draft the invite",
+              "prompt": "Write a one-line calendar invite description for the time that works best."
             }
           ]
         },
         {
-          "title": "In Celsius",
-          "prompt": "Give me that in Celsius.",
+          "title": "Add New York",
+          "prompt": "Add New York to the mix — same question, what time is 9am Houston for all four cities?",
           "followUps": [
             {
-              "title": "Jacket weather?",
-              "prompt": "Do I need a jacket tonight in Houston?"
+              "title": "Best overlap for four",
+              "prompt": "Is there a single hour that's reasonable business hours for all four cities at once?"
             }
           ]
         }
       ]
     },
     {
-      "title": "Plan a migration",
-      "label": "of a Postgres database",
-      "prompt": "Walk me through a plan to migrate a Postgres database.",
+      "title": "Compare the weather",
+      "label": "Houston vs Paris right now",
+      "prompt": "I'm deciding between visiting Houston or Paris this weekend. What's the weather like in both cities right now?",
       "followUps": [
         {
-          "title": "Cut the downtime",
-          "prompt": "How do I keep downtime close to zero?",
+          "title": "Make a recommendation",
+          "prompt": "Based on the weather, which city would you pick and why?",
           "followUps": [
             {
-              "title": "Plan the rollback",
-              "prompt": "What's the rollback plan if it goes wrong?"
+              "title": "What to pack",
+              "prompt": "Give me a short packing list for that city."
             }
           ]
         },
         {
-          "title": "Check the data",
-          "prompt": "How do I verify the data matches afterward?",
+          "title": "Add London",
+          "prompt": "Add London to the comparison — which of the three has the best weather right now?",
           "followUps": [
             {
-              "title": "Make a checklist",
-              "prompt": "Turn that into a short go-live checklist."
+              "title": "Worst of the three",
+              "prompt": "Which city would you least want to visit weather-wise right now, and what's the main reason?"
             }
           ]
         }
       ]
     },
     {
-      "title": "Explain reasoning models",
-      "label": "versus regular ones",
-      "prompt": "Explain how reasoning models differ from regular ones.",
+      "title": "Compound investment",
+      "label": "how much does $50k grow at 7%?",
+      "prompt": "$50,000 invested at 7% annual return, compounded monthly — what is it worth after 10 years? Use the calculator and show the steps.",
       "followUps": [
         {
-          "title": "Is it worth the cost?",
-          "prompt": "When is the extra cost of reasoning worth it?",
+          "title": "Double the time",
+          "prompt": "What about 20 years instead of 10?",
           "followUps": [
             {
-              "title": "Show an example",
-              "prompt": "Give one concrete example where reasoning clearly wins."
+              "title": "Reverse it",
+              "prompt": "How much would I need to invest today at 7% to have exactly $500,000 in 20 years?"
             }
           ]
         },
         {
-          "title": "Why does it help?",
-          "prompt": "Why does thinking before answering help?",
+          "title": "Bump the rate",
+          "prompt": "Redo it at 10% instead of 7%. How much more do I end up with after 10 years?",
           "followUps": [
             {
-              "title": "Keep it short",
-              "prompt": "Summarize that in two sentences."
+              "title": "Over 20 years",
+              "prompt": "What's the dollar difference between 7% and 10% over 20 years, starting with $50,000?"
             }
           ]
         }
       ]
     },
     {
-      "title": "Do some math",
-      "label": "with the calculator",
-      "prompt": "What's an 18% tip on $86.40, split three ways? Use the calculator.",
+      "title": "Discount trap",
+      "label": "is 25% + 20% the same as 45% off?",
+      "prompt": "A product is discounted 25%, then an extra 20% off the sale price. A customer says that's 45% off total. Are they right? Think it through, then use the calculator to verify.",
       "followUps": [
         {
-          "title": "Try 20% instead",
-          "prompt": "Redo it at 20%.",
+          "title": "Apply it to $200",
+          "prompt": "If the original price was $200, what does the customer actually pay after both discounts?",
           "followUps": [
             {
-              "title": "Round it up",
-              "prompt": "What if everyone rounds up to the next dollar?"
+              "title": "vs 40% flat",
+              "prompt": "Which is a better deal for the customer — 25% then 20%, or a single 40% discount? Calculate both."
             }
           ]
         },
         {
-          "title": "Add a fourth person",
-          "prompt": "What if a fourth person joins?",
+          "title": "Find the equivalent",
+          "prompt": "What single discount is mathematically equivalent to taking 25% off then 20% off?",
           "followUps": [
             {
-              "title": "Time for dinner?",
-              "prompt": "What time is it in Houston right now? Use the time tool."
+              "title": "General formula",
+              "prompt": "Give me the general formula for combining two sequential discounts into one."
             }
           ]
         }
