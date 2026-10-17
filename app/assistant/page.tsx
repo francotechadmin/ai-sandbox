@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { PlusIcon } from "lucide-react";
 import { Chat } from "./components/Chat";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { initialSettings, saveSettings } from "./lib/settings";
@@ -11,11 +12,10 @@ export default function AssistantPage() {
   const [config, setConfig] = useState<AssistantConfig | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [chatKey, setChatKey] = useState(0); // bump to start a fresh thread
-  const [showSettings, setShowSettings] = useState(false); // phone only; always visible on large screens
+  const [chatKey, setChatKey] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    // ?agent=<name> picks an agent file (api/assistant/agents/<name>.json); the default one otherwise.
     const agent = new URLSearchParams(window.location.search).get("agent");
     fetch(`/api/assistant/config${agent ? `?agent=${encodeURIComponent(agent)}` : ""}`)
       .then((r) => (r.ok ? (r.json() as Promise<AssistantConfig>) : Promise.reject(new Error(`HTTP ${r.status}`))))
@@ -23,7 +23,7 @@ export default function AssistantPage() {
         setConfig(c);
         setSettings(initialSettings(c));
       })
-      .catch((e: Error) => setLoadError(`Couldn’t reach the assistant API (${e.message}). Is the backend running?`));
+      .catch((e: Error) => setLoadError(`Couldn't reach the assistant API (${e.message}). Is the backend running?`));
   }, []);
 
   function update(next: Settings) {
@@ -31,25 +31,49 @@ export default function AssistantPage() {
     if (config) saveSettings(config.agent, next);
   }
 
+  function newChat() {
+    setChatKey((k) => k + 1);
+    setShowSettings(false);
+  }
+
   return (
-    <div className="flex h-dvh flex-col bg-bg">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-line px-4 sm:px-6">
-        <div className="flex items-center gap-3 text-[15px]">
-          <Link href="/" className="font-medium tracking-tight text-text/70 transition-colors hover:text-text">
-            AI Sandbox
+    <div className="aui-app flex h-dvh flex-col bg-bg">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-line bg-panel px-4 sm:px-6">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-75">
+            <div className="flex size-7 items-center justify-center rounded-full bg-text text-[10px] font-semibold tracking-wide text-bg">
+              GF
+            </div>
+            <span className="hidden text-[14px] font-medium tracking-tight text-text/70 sm:block">
+              Gabriel Franco
+            </span>
           </Link>
-          <span className="text-line" aria-hidden>/</span>
-          <span className="font-medium tracking-tight">{config?.name ?? "Assistant"}</span>
+          <span className="text-[18px] font-light text-line" aria-hidden>/</span>
+          <span className="text-[14px] font-medium tracking-tight text-text">
+            {config?.name ?? "Assistant"}
+          </span>
         </div>
+
         {config && settings && (
-          <button
-            type="button"
-            onClick={() => setShowSettings(true)}
-            className="rounded-full border border-white/15 px-3.5 py-1 text-[13px] font-medium transition-colors hover:border-white/30 lg:hidden"
-            data-testid="open-settings"
-          >
-            Settings
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={newChat}
+              className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-[13px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
+              aria-label="New chat"
+            >
+              <PlusIcon className="size-3.5" />
+              New
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="rounded-full border border-white/15 px-3.5 py-1.5 text-[13px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
+              data-testid="open-settings"
+            >
+              Settings
+            </button>
+          </div>
         )}
       </header>
 
@@ -60,28 +84,25 @@ export default function AssistantPage() {
       ) : !config || !settings ? (
         <div className="m-6 text-sm text-muted-foreground">Loading…</div>
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[1fr_340px]">
-          <main className="relative isolate min-h-0 overflow-hidden">
-            {/* Faint flow pattern behind the thread, fading out downward. */}
+        <>
+          <main className="relative isolate min-h-0 flex-1 overflow-hidden">
             <div
               className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[28rem] bg-cover bg-center opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent)]"
               style={{ backgroundImage: "url(/hero-flow.svg)" }}
               aria-hidden
             />
-            <Chat key={chatKey} settings={settings} config={config} onNewChat={() => setChatKey((k) => k + 1)} />
+            <Chat key={chatKey} settings={settings} config={config} onNewChat={newChat} />
           </main>
+
           <SettingsPanel
             config={config}
             settings={settings}
             onChange={update}
-            onNewChat={() => {
-              setChatKey((k) => k + 1);
-              setShowSettings(false);
-            }}
+            onNewChat={newChat}
             onClose={() => setShowSettings(false)}
-            className={showSettings ? "fixed inset-0 top-14 z-20 flex" : "hidden lg:flex"}
+            isOpen={showSettings}
           />
-        </div>
+        </>
       )}
     </div>
   );
