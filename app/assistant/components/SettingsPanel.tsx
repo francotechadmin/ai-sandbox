@@ -25,15 +25,12 @@ export function SettingsPanel({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-20 bg-black/50"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="fixed inset-0 z-30 flex items-center justify-center p-4">
+      {/* Backdrop – sm+ only; mobile is full-screen */}
+      <div className="hidden sm:block fixed inset-0 z-20 bg-black/50" onClick={onClose} aria-hidden />
+      {/* Mobile: full-screen | sm+: centered modal */}
+      <div className="fixed inset-0 z-30 overflow-y-auto bg-panel sm:flex sm:items-center sm:justify-center sm:overflow-visible sm:bg-transparent sm:p-4">
         <div
-          className="flex w-full max-w-sm flex-col gap-5 overflow-y-auto rounded-2xl border border-line bg-panel p-5"
-          style={{ maxHeight: "85dvh" }}
+          className="flex min-h-full flex-col gap-5 p-5 sm:min-h-0 sm:w-full sm:max-w-sm sm:overflow-y-auto sm:rounded-2xl sm:border sm:border-line sm:bg-panel sm:p-5 sm:max-h-[85dvh]"
           data-testid="settings"
         >
           <div className="flex items-center justify-between">

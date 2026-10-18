@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from .assistant.router import router as assistant_router
 from .request_logging import RequestLoggingMiddleware, configure_logging
+from .sql.router import router as sql_router
 
 configure_logging()
 
@@ -14,3 +15,4 @@ app = FastAPI(title="AI Sandbox API")
 app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(assistant_router)
+app.include_router(sql_router)

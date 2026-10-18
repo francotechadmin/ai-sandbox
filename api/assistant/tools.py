@@ -134,7 +134,90 @@ async def get_weather(location: str, units: str = "fahrenheit") -> str:
     )
 
 
-TOOLS: dict[str, BaseTool] = {t.name: t for t in (get_current_time, calculator, get_weather)}
+
+import json as _json
+import re as _re
+import sqlite3 as _sqlite3
+
+from ..sql.seed import get_connection as _wb_conn
+
+
+@tool
+def list_crm_tables() -> str:
+    """List all tables in the World Bank database."""
+    conn = _wb_conn()
+    names = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall()]
+    conn.close()
+    return "Tables: " + ", ".join(names)
+
+
+@tool
+def get_table_schema(table_name: str) -> str:
+    """Get the columns and types for a table in the World Bank database."""
+    conn = _wb_conn()
+    try:
+        rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+        if not rows:
+            return f"Error: table '{table_name}' not found. Use list_crm_tables to see available tables."
+        lines = []
+        for row in rows:
+            flags = []
+            if row[5]: flags.append("PRIMARY KEY")
+            if row[3]: flags.append("NOT NULL")
+            lines.append(f"  {row[1]} {row[2]}" + (f" ({', '.join(flags)})" if flags else ""))
+        return f"Table: {table_name}\n" + "\n".join(lines)
+    except Exception as exc:
+        return f"Error: {exc}"
+    finally:
+        conn.close()
+
+
+def _safe_select(sql: str, limit: int = 500) -> str:
+    first = sql.strip().split()[0].upper() if sql.strip() else ""
+    if first not in ("SELECT", "WITH"):
+        return "Error: only SELECT and WITH queries are allowed."
+    if _re.search(r'\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|ATTACH|DETACH)\b', sql, _re.IGNORECASE):
+        return "Error: only SELECT and WITH queries are allowed."
+    conn = _wb_conn()
+    try:
+        cur = conn.execute(sql)
+        columns = [d[0] for d in (cur.description or [])]
+        rows = [list(r) for r in cur.fetchmany(limit)]
+        return _json.dumps({"columns": columns, "rows": rows, "row_count": len(rows)})
+    except _sqlite3.Error as exc:
+        return f"Error: {exc}"
+    finally:
+        conn.close()
+
+
+@tool
+def run_sql_query(sql: str) -> str:
+    """Run a read-only SELECT query on the World Bank database. Returns JSON with columns and rows (max 500 rows).
+    Only SELECT and WITH (CTE) queries are allowed. Use this to look up values, counts, or detailed data.
+    Use create_chart instead when the result should be visualized as a chart in the chat."""
+    return _safe_select(sql)
+
+
+@tool
+def create_chart(sql: str, title: str = "") -> str:
+    """Run a SQL query and render the result as an interactive chart directly in the chat.
+    Use this when a visual chart adds real insight — time series comparisons, rankings, distributions.
+    Do NOT use this for every query; only when a chart is genuinely more useful than a table.
+    The chart type (line vs bar) is detected automatically from the result shape.
+    Returns a JSON payload the UI renders as a chart."""
+    result = _safe_select(sql, limit=300)
+    if result.startswith("Error:"):
+        return result
+    try:
+        data = _json.loads(result)
+        data["title"] = title
+        data["sql"] = sql
+        return _json.dumps(data)
+    except Exception as exc:
+        return f"Error: {exc}"
+
+
+TOOLS: dict[str, BaseTool] = {t.name: t for t in (get_current_time, calculator, get_weather, list_crm_tables, get_table_schema, run_sql_query, create_chart)}
 
 
 def describe_tools(allowed: list[str] | None = None) -> list[dict[str, str]]:
