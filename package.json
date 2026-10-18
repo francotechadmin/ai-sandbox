@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "knip": "knip"
   },
   "dependencies": {
     "@assistant-ui/react": "^0.15.23",
@@ -23,7 +24,7 @@
     "next": "^16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-type-animation": "^3.2.0",
+    "recharts": "^3.10.1",
     "remark-gfm": "^4.0.1",
     "tw-animate-css": "^1.4.0",
     "tw-shimmer": "^0.4.13",
@@ -38,6 +39,7 @@
     "@typescript/native": "npm:typescript@^7.0.2",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.8",
+    "knip": "^5.88.1",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
     "typescript": "npm:@typescript/typescript6@^6.0.2"

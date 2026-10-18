@@ -25,15 +25,12 @@ export function SettingsPanel({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-20 bg-black/50"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="fixed inset-0 z-30 flex items-center justify-center p-4">
+      {/* Backdrop – sm+ only; mobile is full-screen */}
+      <div className="hidden sm:block fixed inset-0 z-20 bg-black/50" onClick={onClose} aria-hidden />
+      {/* Mobile: full-screen | sm+: centered modal */}
+      <div className="fixed inset-0 z-30 overflow-y-auto bg-panel sm:flex sm:items-center sm:justify-center sm:overflow-visible sm:bg-transparent sm:p-4">
         <div
-          className="flex w-full max-w-sm flex-col gap-5 overflow-y-auto rounded-2xl border border-line bg-panel p-5"
-          style={{ maxHeight: "85dvh" }}
+          className="flex min-h-full flex-col gap-5 p-5 sm:min-h-0 sm:w-full sm:max-w-sm sm:overflow-y-auto sm:rounded-2xl sm:border sm:border-line sm:bg-panel sm:p-5 sm:max-h-[85dvh]"
           data-testid="settings"
         >
           <div className="flex items-center justify-between">
@@ -77,14 +74,22 @@ export function SettingsPanel({
           <fieldset className="flex flex-col gap-1.5">
             <legend className={label}>Tools</legend>
             {config.tools.map((t) => (
-              <label key={t.name} className="flex cursor-default items-start gap-2.5 text-[14px] select-none">
+              <label key={t.name} className={`flex items-start gap-2.5 text-[14px] ${locked ? "cursor-default select-none" : "cursor-pointer"}`}>
                 <input
                   type="checkbox"
                   checked={settings.tools.includes(t.name)}
-                  onChange={() => {}}
-                  tabIndex={-1}
-                  className="pointer-events-none mt-0.5 h-4 w-4 accent-text"
-                  aria-readonly="true"
+                  onChange={locked ? undefined : () =>
+                    onChange({
+                      ...settings,
+                      tools: settings.tools.includes(t.name)
+                        ? settings.tools.filter((n) => n !== t.name)
+                        : [...settings.tools, t.name],
+                    })
+                  }
+                  readOnly={locked}
+                  tabIndex={locked ? -1 : undefined}
+                  className={`mt-0.5 h-4 w-4 accent-text ${locked ? "pointer-events-none" : ""}`}
+                  aria-readonly={locked ? "true" : undefined}
                 />
                 <span>
                   <span className="font-mono text-[12px]">{t.name}</span>

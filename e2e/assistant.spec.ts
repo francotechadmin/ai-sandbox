@@ -2,7 +2,18 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function openAssistant(page: Page) {
   await page.goto("/assistant");
+  // Wait for config to load — the settings button only appears once the config is fetched.
+  await expect(page.getByTestId("open-settings")).toBeVisible();
+}
+
+async function openSettings(page: Page) {
+  await page.getByTestId("open-settings").click();
   await expect(page.getByTestId("settings")).toBeVisible();
+}
+
+async function closeSettings(page: Page) {
+  await page.getByLabel("Close settings").click();
+  await expect(page.getByTestId("settings")).not.toBeVisible();
 }
 
 // The chat is assistant-ui's own thread; these are its accessible names and data-slot hooks.
@@ -25,6 +36,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("settings start from the server: first available model, prompt seeded, keyless models disabled", async ({ page }) => {
+  await openSettings(page);
   await expect(page.locator("#model")).toHaveValue("demo-fake");
   await expect(page.locator("#model option[value=claude-haiku-4-5]")).toBeDisabled();
   await expect(page.locator("#system-prompt")).toHaveValue(/helpful assistant/);
@@ -35,7 +47,9 @@ test("the system prompt is sent, and edits apply to the next message", async ({ 
   await expect(replies(page).first()).toContainText("[system: You are a helpful assistant");
   await idle(page);
 
+  await openSettings(page);
   await page.locator("#system-prompt").fill("Be terse.");
+  await closeSettings(page);
   await send(page, "hi");
   await expect(replies(page).nth(1)).toContainText("[system: Be terse.]");
 });
@@ -59,12 +73,14 @@ test("tool calls render with their input and result, and can be switched off", a
   await send(page, "please calc 12*(3+4)");
   await idle(page);
   await slot(page, "tool-group-trigger").click();
-  await replies(page).last().getByText("Used tool: calculator").click();
+  await replies(page).last().getByText("Used tool: calculator").click({ force: true });
   await expect(replies(page).last()).toContainText("12*(3+4)");
   await expect(replies(page).last()).toContainText("84");
   await expect(slot(page, "reasoning-root")).toHaveCount(2);
 
+  await openSettings(page);
   await page.getByLabel("calculator").uncheck();
+  await closeSettings(page);
   await send(page, "please calc 1+1");
   await idle(page);
   await expect(slot(page, "tool-group-root")).toHaveCount(1);
@@ -109,14 +125,18 @@ test("a failed request shows its error and keeps what the user typed", async ({ 
 });
 
 test("the system prompt persists across reloads; new chat and reset work", async ({ page }) => {
+  await openSettings(page);
   await page.locator("#system-prompt").fill("Be terse.");
+  await closeSettings(page);
   await send(page, "hi");
   await idle(page);
 
   await page.reload();
+  await openSettings(page);
   await expect(page.locator("#system-prompt")).toHaveValue("Be terse.");
   await page.getByTestId("new-chat").click();
   await expect(userMessages(page)).toHaveCount(0);
+  await openSettings(page);
   await page.getByRole("button", { name: "Reset" }).click();
   await expect(page.locator("#system-prompt")).toHaveValue(/helpful assistant/);
 });
@@ -128,23 +148,25 @@ test("when restricted, the input bar is locked and conversations walk down the p
   });
   await page.reload();
   await expect(composer(page)).toBeDisabled();
-  await expect(composer(page)).toHaveAttribute("placeholder", /token shortage/);
+  await expect(composer(page)).toHaveAttribute("placeholder", /Select a prompt to continue/);
   // the system prompt is locked too: readable, not editable, no reset
+  await openSettings(page);
   await expect(page.locator("#system-prompt")).toHaveAttribute("readonly", "");
   await expect(page.getByRole("button", { name: "Reset" })).toHaveCount(0);
+  await closeSettings(page);
 
   const chip = (name: string | RegExp) => page.getByRole("button", { name });
-  await chip(/Do some math/).click();
-  await expect(userMessages(page).first()).toContainText("18% tip");
+  await chip(/Discount trap/).click();
+  await expect(userMessages(page).first()).toContainText("45%");
   await idle(page);
 
   // Only the follow-ups of the last prompt are offered; the input stays locked.
-  await expect(chip("Try 20% instead")).toBeVisible();
-  await expect(chip(/Check the weather/)).toHaveCount(0);
-  await chip("Add a fourth person").click();
-  await expect(userMessages(page).nth(1)).toContainText("fourth person");
+  await expect(chip("Apply it to $200")).toBeVisible();
+  await expect(chip(/Compare the weather/)).toHaveCount(0);
+  await chip("Find the equivalent").click();
+  await expect(userMessages(page).nth(1)).toContainText("equivalent");
   await idle(page);
-  await chip("Time for dinner?").click();
+  await chip("General formula").click();
   await idle(page);
   await expect(composer(page)).toBeDisabled();
 
@@ -152,12 +174,12 @@ test("when restricted, the input bar is locked and conversations walk down the p
   await expect(page.getByText("And that's a wrap.")).toBeVisible();
   await chip("Start a new chat").click();
   await expect(userMessages(page)).toHaveCount(0);
-  await expect(chip(/Check the weather/)).toBeVisible();
+  await expect(chip(/Compare the weather/)).toBeVisible();
 });
 
 test("the landing page links to the assistant", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await page.getByRole("link", { name: "Open the assistant" }).click();
+  await page.locator('a[href="/assistant"]').click();
   await expect(page).toHaveURL(/\/assistant$/);
 });

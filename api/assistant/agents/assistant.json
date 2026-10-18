@@ -9,7 +9,7 @@
   ],
   "restrict": true,
   "placeholder": "Select a prompt to continue.",
-  "endNote": "That's a wrap. Start a new chat to try another workflow.",
+  "endNote": "And that's a wrap.",
   "prompts": [
     {
       "title": "Schedule a global call",

@@ -134,6 +134,8 @@ export type ThreadProps = {
    * none left.
    */
   locked?: ThreadLock | undefined;
+  /** LOCAL EDIT: optional row rendered above the composer without locking the input. */
+  followUp?: ReactNode | undefined;
 };
 
 export type ThreadLock = {
@@ -185,6 +187,7 @@ export const Thread: FC<ThreadProps> = ({
   components = EMPTY_COMPONENTS,
   autoFocus = true,
   locked,
+  followUp,
 }) => {
   const isEmpty = useAuiState(isNewChatView);
 
@@ -194,6 +197,7 @@ export const Thread: FC<ThreadProps> = ({
         isEmpty={isEmpty}
         autoFocus={autoFocus}
         locked={locked}
+        followUp={followUp}
       />
     </ThreadComponentsContext.Provider>
   );
@@ -203,7 +207,8 @@ const ThreadRoot: FC<{
   isEmpty: boolean;
   autoFocus: boolean;
   locked: ThreadLock | undefined;
-}> = ({ isEmpty, autoFocus, locked }) => {
+  followUp?: ReactNode;
+}> = ({ isEmpty, autoFocus, locked, followUp }) => {
   const { Welcome = ThreadWelcome } = useContext(ThreadComponentsContext);
 
   return (
@@ -254,6 +259,7 @@ const ThreadRoot: FC<{
             <ThreadScrollToBottom />
             <ThreadFollowupSuggestions />
             {locked && <LockedPromptChips locked={locked} />}
+            {followUp}
             <Composer
               autoFocus={autoFocus}
               locked={locked}
