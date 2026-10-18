@@ -19,16 +19,19 @@ export default function AssistantPage() {
   useEffect(() => {
     const agent = new URLSearchParams(window.location.search).get("agent");
     // Render from the cached copy right away, then refresh it from the server.
-    const cached = cachedConfig(agent);
-    if (cached) {
-      setConfig(cached);
-      setSettings(initialSettings(cached));
-    }
+    let cached: AssistantConfig | null = null;
+    const show = (c: AssistantConfig) => {
+      setConfig(c);
+      setSettings(initialSettings(c));
+    };
+    queueMicrotask(() => {
+      cached = cachedConfig(agent);
+      if (cached) show(cached);
+    });
     fetchConfig(agent)
       .then((c) => {
         if (cached && JSON.stringify(c) === JSON.stringify(cached)) return;
-        setConfig(c);
-        setSettings(initialSettings(c));
+        show(c);
       })
       .catch((e: Error) => {
         if (!cached) setLoadError(`Couldn't reach the assistant API (${e.message}). Is the backend running?`);
