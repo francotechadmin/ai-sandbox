@@ -473,6 +473,7 @@ def other_agent(tmp_path, monkeypatch):
 def test_agents_are_listed_from_their_files(other_agent):
     assert client.get("/api/assistant/agents").json() == [
         {"id": "assistant", "name": "Assistant"},
+        {"id": "sql", "name": "World Bank Explorer"},
         {"id": "terse", "name": "Terse"},
     ]
 
