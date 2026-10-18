@@ -29,13 +29,16 @@ const CreateChartTool: ToolCallMessagePartComponent = (props) => {
   const raw = typeof props.result === "string" ? props.result : "";
   if (raw.startsWith("Error:")) return <ToolFallback {...props} />;
 
+  let data: ChartData | null = null;
   try {
-    const data = JSON.parse(raw) as ChartData;
-    if (!Array.isArray(data.columns)) return <ToolFallback {...props} />;
-    return <InlineChart data={data} />;
+    const parsed = JSON.parse(raw) as ChartData;
+    if (Array.isArray(parsed.columns)) data = parsed;
   } catch {
-    return <ToolFallback {...props} />;
+    // fall through to ToolFallback
   }
+
+  if (!data) return <ToolFallback {...props} />;
+  return <InlineChart data={data} />;
 };
 
 const RunSqlTool: ToolCallMessagePartComponent = (props) => {
