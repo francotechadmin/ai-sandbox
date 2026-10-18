@@ -31,7 +31,7 @@ export function detectChartType(result: QueryResult): ChartType {
   return "table";
 }
 
-export type ChartRow = Record<string, number | string | null>;
+type ChartRow = Record<string, number | string | null>;
 
 export function pivotLineData(result: QueryResult): { data: ChartRow[]; series: string[] } {
   const { columns, rows } = result;

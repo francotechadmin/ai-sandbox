@@ -1,4 +1,4 @@
-export type Demo = {
+type Demo = {
   slug: string;
   name: string;
   description: string;

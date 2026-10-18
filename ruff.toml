@@ -2,4 +2,7 @@ line-length = 120
 target-version = "py311"
 
 [lint]
-select = ["E", "F", "I", "UP", "B", "SIM"]
+select = ["E", "F", "I", "UP", "B", "SIM", "ARG", "ERA"]
+
+[lint.per-file-ignores]
+"api/tests/**" = ["ARG"]
