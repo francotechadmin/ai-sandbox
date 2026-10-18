@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DemoSwitcher } from "../_components/DemoSwitcher";
 import { Chat } from "./components/Chat";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { cachedConfig, fetchConfig } from "./lib/config";
@@ -78,9 +79,7 @@ export default function AssistantPage() {
             </span>
           </Link>
           <span className="text-[18px] font-light text-line" aria-hidden>/</span>
-          <span className="text-[14px] font-medium tracking-tight text-text">
-            {config?.name ?? "Assistant"}
-          </span>
+          <DemoSwitcher slug="assistant" label={config?.name} />
         </div>
 
         {config && settings && (
