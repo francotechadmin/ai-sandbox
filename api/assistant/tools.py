@@ -1,6 +1,9 @@
 # Tools the assistant can call. Which of these are active is a per-request
 # setting chosen in the UI; this module only defines what exists.
 
+import json as _json
+import re as _re
+import sqlite3 as _sqlite3
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -8,6 +11,8 @@ import httpx
 import simpleeval
 from langchain_core.tools import BaseTool, tool
 from simpleeval import InvalidExpression, simple_eval
+
+from ..sql.seed import get_connection as _wb_conn
 
 # simpleeval's default exponent cap (4,000,000) still allows multi-second
 # integer powers; keep it small enough that a calculation can't tie up the server.
@@ -135,13 +140,6 @@ async def get_weather(location: str, units: str = "fahrenheit") -> str:
 
 
 
-import json as _json
-import re as _re
-import sqlite3 as _sqlite3
-
-from ..sql.seed import get_connection as _wb_conn
-
-
 @tool
 def list_crm_tables() -> str:
     """List all tables in the World Bank database."""
@@ -162,8 +160,10 @@ def get_table_schema(table_name: str) -> str:
         lines = []
         for row in rows:
             flags = []
-            if row[5]: flags.append("PRIMARY KEY")
-            if row[3]: flags.append("NOT NULL")
+            if row[5]:
+                flags.append("PRIMARY KEY")
+            if row[3]:
+                flags.append("NOT NULL")
             lines.append(f"  {row[1]} {row[2]}" + (f" ({', '.join(flags)})" if flags else ""))
         return f"Table: {table_name}\n" + "\n".join(lines)
     except Exception as exc:
@@ -217,7 +217,10 @@ def create_chart(sql: str, title: str = "") -> str:
         return f"Error: {exc}"
 
 
-TOOLS: dict[str, BaseTool] = {t.name: t for t in (get_current_time, calculator, get_weather, list_crm_tables, get_table_schema, run_sql_query, create_chart)}
+TOOLS: dict[str, BaseTool] = {
+    t.name: t
+    for t in (get_current_time, calculator, get_weather, list_crm_tables, get_table_schema, run_sql_query, create_chart)
+}
 
 
 def describe_tools(allowed: list[str] | None = None) -> list[dict[str, str]]:
