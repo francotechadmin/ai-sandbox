@@ -22,37 +22,37 @@ export type Demo = {
 // landing page needs to know about it.
 export const DEMOS: Demo[] = [
   {
-    slug: "assistant",
-    name: "Assistant",
-    description:
-      "A streaming chat agent with a model picker, reasoning handled by the backend, tool calls rendered live, and a system prompt you edit in the UI.",
-    status: "in-progress",
-    intro: {
-      tagline: "A chat agent you can watch think.",
-      highlights: [
-        { icon: "brain", title: "Visible reasoning", text: "The model's thinking streams in as it works, not just the final answer." },
-        { icon: "wrench", title: "Live tool calls", text: "Clock, calculator and weather lookups appear with their inputs and results as they run." },
-        { icon: "sliders", title: "Change anything", text: "Switch models, edit the system prompt or turn tools off in Settings. It applies to your next message." },
-      ],
-      howTo: "To keep API costs in check, typing is locked. Pick a guided prompt, then follow-ups branch from it. The server enforces this too.",
-      stack: ["Next.js", "FastAPI", "LangGraph", "Claude", "OpenAI"],
-    },
-  },
-  {
     slug: "sql",
     name: "World Bank Explorer",
     description:
       "Ask questions about real World Bank data — GDP, life expectancy, internet adoption, and more across 40+ countries since 2000. The agent writes SQL live and results render as charts.",
     status: "live",
     intro: {
-      tagline: "Ask a question, watch the agent write the SQL.",
+      tagline: "Ask a question about the world and get an answer built from real SQL.",
       highlights: [
-        { icon: "database", title: "Real data", text: "World Bank indicators for 40+ countries since 2000: GDP, life expectancy, internet adoption and more." },
-        { icon: "code", title: "SQL, shown", text: "The agent reads the schema, writes read-only queries and runs them. Expand any tool call to see the exact SQL." },
-        { icon: "chart", title: "Answers as charts", text: "Results are plotted inline instead of dumped as a table." },
+        { icon: "database", title: "Real data", text: "Country figures from the World Bank: GDP, life expectancy, internet use and more, for 40+ countries since 2000." },
+        { icon: "code", title: "You can see the SQL", text: "The agent looks up the tables, writes a query and runs it. Open any tool call to see exactly what it ran." },
+        { icon: "chart", title: "Charts, not tables", text: "Answers come back as charts, so you can read the trend at a glance." },
       ],
-      howTo: "Pick a guided prompt, like GDP per capita for the USA, China and India, then follow-ups dig deeper. The Database button shows the schema.",
+      howTo: "Pick one of the starter questions, like GDP per capita for the US, China and India, then choose a follow-up to go deeper. The Database button shows what's in the data.",
       stack: ["Next.js", "FastAPI", "LangGraph", "SQLite", "Recharts"],
+    },
+  },
+  {
+    slug: "assistant",
+    name: "Assistant",
+    description:
+      "A streaming chat agent with a model picker, reasoning handled by the backend, tool calls rendered live, and a system prompt you edit in the UI.",
+    status: "in-progress",
+    intro: {
+      tagline: "A starting point for building chat agents that use tools.",
+      highlights: [
+        { icon: "wrench", title: "Tool use", text: "It can check the time, do math and look up live weather, and you see each call and its result as it happens." },
+        { icon: "brain", title: "Reasoning you can follow", text: "The model's thinking streams in alongside the answer instead of arriving all at once." },
+        { icon: "sliders", title: "Easy to reshape", text: "Models, the system prompt and tools are settings, not code. Change them in Settings, or add a new agent with a single config file." },
+      ],
+      howTo: "This is the base template the other demos build on. Typing is locked to starter prompts to keep API costs down, so pick one and follow the suggestions from there.",
+      stack: ["Next.js", "FastAPI", "LangGraph", "Claude", "OpenAI"],
     },
   },
 ];
