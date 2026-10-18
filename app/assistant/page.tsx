@@ -3,11 +3,28 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Chat } from "./components/Chat";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { cachedConfig, fetchConfig } from "./lib/config";
 import { initialSettings, saveSettings } from "./lib/settings";
 import type { AssistantConfig, Settings } from "./lib/types";
+
+// Mirrors an empty chat (welcome line, composer, suggestions) while the config loads.
+function ChatSkeleton() {
+  return (
+    <div role="status" className="mx-auto flex h-full w-full max-w-[44rem] flex-col justify-center gap-6 px-4">
+      <span className="sr-only">Loading assistant</span>
+      <Skeleton className="h-7 w-2/5 motion-reduce:animate-none" />
+      <Skeleton className="h-24 w-full rounded-2xl motion-reduce:animate-none" />
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-10 w-full rounded-xl motion-reduce:animate-none" />
+        <Skeleton className="h-10 w-full rounded-xl motion-reduce:animate-none" />
+        <Skeleton className="h-10 w-full rounded-xl motion-reduce:animate-none" />
+      </div>
+    </div>
+  );
+}
 
 export default function AssistantPage() {
   const [config, setConfig] = useState<AssistantConfig | null>(null);
@@ -100,6 +117,7 @@ export default function AssistantPage() {
             style={{ backgroundImage: "url(/hero-flow.svg)" }}
             aria-hidden
           />
+          <ChatSkeleton />
         </main>
       ) : (
         <>

@@ -15,9 +15,10 @@ test("the landing page warms the config, so the demo opens without waiting", asy
   await expect(page.getByText("Loading…")).toHaveCount(0);
 });
 
-test("a cold first visit shows no loading text, then the chat", async ({ page }) => {
+test("a cold first visit shows a skeleton, then the chat", async ({ page }) => {
   await slowConfig(page);
   await page.goto("/assistant");
   await expect(page.getByText("Loading…")).toHaveCount(0);
+  await expect(page.locator('[data-slot="skeleton"]').first()).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Message input" })).toBeVisible({ timeout: 6000 });
 });
