@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import { DEMOS } from "./app/demos";
 
 // Runs the real UI against the real API with a scripted model (no API keys,
 // no network). Locally: `npm run test:e2e`; set PYTHON to a venv's python and
@@ -11,6 +12,17 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: "http://localhost:3000",
+    // Demo intro pop-ups are marked seen so they don't cover the page under
+    // test; demo-intro.spec.ts opts back in.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: "http://localhost:3000",
+          localStorage: DEMOS.map((d) => ({ name: `demo-intro-seen-v1:${d.slug}`, value: "1" })),
+        },
+      ],
+    },
     trace: "retain-on-failure",
     launchOptions: { executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] },
   },
