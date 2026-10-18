@@ -9,9 +9,7 @@ router = APIRouter(prefix="/api/sql", tags=["sql"])
 def get_schema() -> dict:
     conn = get_connection()
     tables = []
-    for (name,) in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-    ).fetchall():
+    for (name,) in conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall():
         columns = [
             {
                 "name": row[1],

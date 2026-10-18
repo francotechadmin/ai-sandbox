@@ -17,34 +17,67 @@ _seeded = False
 
 COUNTRIES = [
     # G7
-    "USA", "GBR", "DEU", "FRA", "JPN", "ITA", "CAN",
+    "USA",
+    "GBR",
+    "DEU",
+    "FRA",
+    "JPN",
+    "ITA",
+    "CAN",
     # BRICS+
-    "BRA", "RUS", "IND", "CHN", "ZAF",
+    "BRA",
+    "RUS",
+    "IND",
+    "CHN",
+    "ZAF",
     # East / Southeast Asia
-    "KOR", "SGP", "THA", "IDN", "MYS", "VNM", "PHL",
+    "KOR",
+    "SGP",
+    "THA",
+    "IDN",
+    "MYS",
+    "VNM",
+    "PHL",
     # South Asia
-    "BGD", "PAK",
+    "BGD",
+    "PAK",
     # Middle East
-    "SAU", "ARE", "TUR", "IRN",
+    "SAU",
+    "ARE",
+    "TUR",
+    "IRN",
     # Africa
-    "NGA", "ETH", "KEN", "EGY", "GHA",
+    "NGA",
+    "ETH",
+    "KEN",
+    "EGY",
+    "GHA",
     # Latin America
-    "MEX", "ARG", "COL", "CHL", "PER",
+    "MEX",
+    "ARG",
+    "COL",
+    "CHL",
+    "PER",
     # Europe
-    "SWE", "NOR", "NLD", "ESP", "POL",
+    "SWE",
+    "NOR",
+    "NLD",
+    "ESP",
+    "POL",
     # Oceania
-    "AUS", "NZL",
+    "AUS",
+    "NZL",
 ]
 
 INDICATORS: dict[str, dict] = {
-    "NY.GDP.PCAP.CD": {"name": "GDP per capita",             "unit": "current US$"},
-    "NY.GDP.MKTP.CD": {"name": "GDP (total)",                "unit": "current US$"},
-    "SP.POP.TOTL":    {"name": "Population",                 "unit": "people"},
-    "SP.DYN.LE00.IN": {"name": "Life expectancy at birth",   "unit": "years"},
-    "SH.DYN.MORT":    {"name": "Under-5 mortality rate",     "unit": "per 1,000 live births"},
-    "IT.NET.USER.ZS": {"name": "Internet users",             "unit": "% of population"},
-    "EG.ELC.ACCS.ZS": {"name": "Access to electricity",     "unit": "% of population"},
-    "SE.ADT.LITR.ZS": {"name": "Adult literacy rate",        "unit": "% of adults ages 15+"},
+    "NY.GDP.PCAP.CD": {"name": "GDP per capita", "unit": "current US$"},
+    "NY.GDP.MKTP.CD": {"name": "GDP (total)", "unit": "current US$"},
+    "SP.POP.TOTL": {"name": "Population", "unit": "people"},
+    "SP.DYN.LE00.IN": {"name": "Life expectancy at birth", "unit": "years"},
+    "SH.DYN.MORT": {"name": "Under-5 mortality rate", "unit": "per 1,000 live births"},
+    "IT.NET.USER.ZS": {"name": "Internet users", "unit": "% of population"},
+    "EG.ELC.ACCS.ZS": {"name": "Access to electricity", "unit": "% of population"},
+    "SE.ADT.LITR.ZS": {"name": "Adult literacy rate", "unit": "% of adults ages 15+"},
 }
 
 _WB_BASE = "https://api.worldbank.org/v2"
@@ -76,6 +109,7 @@ CREATE TABLE IF NOT EXISTS measurements (
 
 
 # ── fetch helpers ────────────────────────────────────────────────────────────
+
 
 def _fetch_countries(client: httpx.Client) -> list[dict]:
     rows: list[dict] = []
@@ -114,6 +148,7 @@ def _fetch_indicator(client: httpx.Client, code: str) -> list[dict]:
 
 
 # ── seed ─────────────────────────────────────────────────────────────────────
+
 
 def seed(path: Path = _DB_PATH) -> None:
     global _seeded
@@ -169,8 +204,7 @@ def seed(path: Path = _DB_PATH) -> None:
                 if not year_str:
                     continue
                 conn.execute(
-                    "INSERT OR IGNORE INTO measurements (country_code, indicator_code, year, value) "
-                    "VALUES (?,?,?,?)",
+                    "INSERT OR IGNORE INTO measurements (country_code, indicator_code, year, value) VALUES (?,?,?,?)",
                     (iso3, ind_code, int(year_str), value),
                 )
             logger.info("loaded indicator %s", ind_code)

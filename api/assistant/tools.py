@@ -139,7 +139,6 @@ async def get_weather(location: str, units: str = "fahrenheit") -> str:
     )
 
 
-
 @tool
 def list_crm_tables() -> str:
     """List all tables in the World Bank database."""
@@ -176,7 +175,7 @@ def _safe_select(sql: str, limit: int = 500) -> str:
     first = sql.strip().split()[0].upper() if sql.strip() else ""
     if first not in ("SELECT", "WITH"):
         return "Error: only SELECT and WITH queries are allowed."
-    if _re.search(r'\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|ATTACH|DETACH)\b', sql, _re.IGNORECASE):
+    if _re.search(r"\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|REPLACE|ATTACH|DETACH)\b", sql, _re.IGNORECASE):
         return "Error: only SELECT and WITH queries are allowed."
     conn = _wb_conn()
     try:
