@@ -2,6 +2,7 @@
 
 import { type ReactNode } from "react";
 import Link from "next/link";
+import { DemoIntro } from "@/app/_components/DemoIntro";
 import { DemoSwitcher } from "@/app/_components/DemoSwitcher";
 
 export function AgentPageShell({
@@ -38,9 +39,10 @@ export function AgentPageShell({
           <span className="text-[18px] font-light text-line" aria-hidden>/</span>
           <DemoSwitcher slug={slug} label={name} />
         </div>
-        {isReady && headerActions && (
-          <div className="flex items-center gap-2">{headerActions}</div>
-        )}
+        <div className="flex items-center gap-2">
+          {isReady && headerActions}
+          <DemoIntro slug={slug} />
+        </div>
       </header>
 
       {loadError ? (
