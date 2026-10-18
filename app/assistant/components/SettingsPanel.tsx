@@ -74,14 +74,22 @@ export function SettingsPanel({
           <fieldset className="flex flex-col gap-1.5">
             <legend className={label}>Tools</legend>
             {config.tools.map((t) => (
-              <label key={t.name} className="flex cursor-default items-start gap-2.5 text-[14px] select-none">
+              <label key={t.name} className={`flex items-start gap-2.5 text-[14px] ${locked ? "cursor-default select-none" : "cursor-pointer"}`}>
                 <input
                   type="checkbox"
                   checked={settings.tools.includes(t.name)}
-                  onChange={() => {}}
-                  tabIndex={-1}
-                  className="pointer-events-none mt-0.5 h-4 w-4 accent-text"
-                  aria-readonly="true"
+                  onChange={locked ? undefined : () =>
+                    onChange({
+                      ...settings,
+                      tools: settings.tools.includes(t.name)
+                        ? settings.tools.filter((n) => n !== t.name)
+                        : [...settings.tools, t.name],
+                    })
+                  }
+                  readOnly={locked}
+                  tabIndex={locked ? -1 : undefined}
+                  className={`mt-0.5 h-4 w-4 accent-text ${locked ? "pointer-events-none" : ""}`}
+                  aria-readonly={locked ? "true" : undefined}
                 />
                 <span>
                   <span className="font-mono text-[12px]">{t.name}</span>

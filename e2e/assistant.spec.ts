@@ -156,17 +156,17 @@ test("when restricted, the input bar is locked and conversations walk down the p
   await closeSettings(page);
 
   const chip = (name: string | RegExp) => page.getByRole("button", { name });
-  await chip(/Do some math/).click();
-  await expect(userMessages(page).first()).toContainText("18% tip");
+  await chip(/Discount trap/).click();
+  await expect(userMessages(page).first()).toContainText("45%");
   await idle(page);
 
   // Only the follow-ups of the last prompt are offered; the input stays locked.
-  await expect(chip("Try 20% instead")).toBeVisible();
-  await expect(chip(/Check the weather/)).toHaveCount(0);
-  await chip("Add a fourth person").click();
-  await expect(userMessages(page).nth(1)).toContainText("fourth person");
+  await expect(chip("Apply it to $200")).toBeVisible();
+  await expect(chip(/Compare the weather/)).toHaveCount(0);
+  await chip("Find the equivalent").click();
+  await expect(userMessages(page).nth(1)).toContainText("equivalent");
   await idle(page);
-  await chip("Time for dinner?").click();
+  await chip("General formula").click();
   await idle(page);
   await expect(composer(page)).toBeDisabled();
 
@@ -174,7 +174,7 @@ test("when restricted, the input bar is locked and conversations walk down the p
   await expect(page.getByText("And that's a wrap.")).toBeVisible();
   await chip("Start a new chat").click();
   await expect(userMessages(page)).toHaveCount(0);
-  await expect(chip(/Check the weather/)).toBeVisible();
+  await expect(chip(/Compare the weather/)).toBeVisible();
 });
 
 test("the landing page links to the assistant", async ({ page }) => {
