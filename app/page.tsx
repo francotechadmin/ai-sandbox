@@ -47,7 +47,9 @@ export default function HomePage() {
             Open to projects
           </span>
           <a
-            href="mailto:francoxgabriel@gmail.com"
+            href="https://francotech.dev"
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-full bg-ink px-4 py-2 text-[13px] font-medium text-paper transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
           >
             Get in touch
