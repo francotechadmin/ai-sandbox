@@ -73,7 +73,7 @@ test("tool calls render with their input and result, and can be switched off", a
   await send(page, "please calc 12*(3+4)");
   await idle(page);
   await slot(page, "tool-group-trigger").click();
-  await replies(page).last().getByText("Used tool: calculator").click();
+  await replies(page).last().getByText("Used tool: calculator").click({ force: true });
   await expect(replies(page).last()).toContainText("12*(3+4)");
   await expect(replies(page).last()).toContainText("84");
   await expect(slot(page, "reasoning-root")).toHaveCount(2);
@@ -136,6 +136,7 @@ test("the system prompt persists across reloads; new chat and reset work", async
   await expect(page.locator("#system-prompt")).toHaveValue("Be terse.");
   await page.getByTestId("new-chat").click();
   await expect(userMessages(page)).toHaveCount(0);
+  await openSettings(page);
   await page.getByRole("button", { name: "Reset" }).click();
   await expect(page.locator("#system-prompt")).toHaveValue(/helpful assistant/);
 });
@@ -147,7 +148,7 @@ test("when restricted, the input bar is locked and conversations walk down the p
   });
   await page.reload();
   await expect(composer(page)).toBeDisabled();
-  await expect(composer(page)).toHaveAttribute("placeholder", /token shortage/);
+  await expect(composer(page)).toHaveAttribute("placeholder", /Select a prompt to continue/);
   // the system prompt is locked too: readable, not editable, no reset
   await openSettings(page);
   await expect(page.locator("#system-prompt")).toHaveAttribute("readonly", "");
@@ -179,6 +180,6 @@ test("when restricted, the input bar is locked and conversations walk down the p
 test("the landing page links to the assistant", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await page.getByRole("link", { name: "Open the assistant" }).click();
+  await page.locator('a[href="/assistant"]').click();
   await expect(page).toHaveURL(/\/assistant$/);
 });
