@@ -3,10 +3,28 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Chat } from "./components/Chat";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { cachedConfig, fetchConfig } from "./lib/config";
 import { initialSettings, saveSettings } from "./lib/settings";
 import type { AssistantConfig, Settings } from "./lib/types";
+
+// Mirrors an empty chat (welcome line, composer, suggestions) while the config loads.
+function ChatSkeleton() {
+  return (
+    <div role="status" className="mx-auto flex h-full w-full max-w-[44rem] flex-col justify-center gap-6 px-4">
+      <span className="sr-only">Loading assistant</span>
+      <Skeleton className="h-7 w-2/5 motion-reduce:animate-none" />
+      <Skeleton className="h-24 w-full rounded-2xl motion-reduce:animate-none" />
+      <div className="flex flex-col gap-2">
+        <Skeleton className="h-10 w-full rounded-xl motion-reduce:animate-none" />
+        <Skeleton className="h-10 w-full rounded-xl motion-reduce:animate-none" />
+        <Skeleton className="h-10 w-full rounded-xl motion-reduce:animate-none" />
+      </div>
+    </div>
+  );
+}
 
 export default function AssistantPage() {
   const [config, setConfig] = useState<AssistantConfig | null>(null);
@@ -17,13 +35,24 @@ export default function AssistantPage() {
 
   useEffect(() => {
     const agent = new URLSearchParams(window.location.search).get("agent");
-    fetch(`/api/assistant/config${agent ? `?agent=${encodeURIComponent(agent)}` : ""}`)
-      .then((r) => (r.ok ? (r.json() as Promise<AssistantConfig>) : Promise.reject(new Error(`HTTP ${r.status}`))))
+    // Render from the cached copy right away, then refresh it from the server.
+    let cached: AssistantConfig | null = null;
+    const show = (c: AssistantConfig) => {
+      setConfig(c);
+      setSettings(initialSettings(c));
+    };
+    queueMicrotask(() => {
+      cached = cachedConfig(agent);
+      if (cached) show(cached);
+    });
+    fetchConfig(agent)
       .then((c) => {
-        setConfig(c);
-        setSettings(initialSettings(c));
+        if (cached && JSON.stringify(c) === JSON.stringify(cached)) return;
+        show(c);
       })
-      .catch((e: Error) => setLoadError(`Couldn't reach the assistant API (${e.message}). Is the backend running?`));
+      .catch((e: Error) => {
+        if (!cached) setLoadError(`Couldn't reach the assistant API (${e.message}). Is the backend running?`);
+      });
   }, []);
 
   function update(next: Settings) {
@@ -82,7 +111,14 @@ export default function AssistantPage() {
           {loadError}
         </div>
       ) : !config || !settings ? (
-        <div className="m-6 text-sm text-muted-foreground">Loading…</div>
+        <main className="relative isolate min-h-0 flex-1 overflow-hidden" aria-busy>
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[28rem] bg-cover bg-center opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent)]"
+            style={{ backgroundImage: "url(/hero-flow.svg)" }}
+            aria-hidden
+          />
+          <ChatSkeleton />
+        </main>
       ) : (
         <>
           <main className="relative isolate min-h-0 flex-1 overflow-hidden">

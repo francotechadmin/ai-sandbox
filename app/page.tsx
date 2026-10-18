@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRightIcon, BrainIcon, CheckIcon, WrenchIcon } from "lucide-react";
 import { DEMOS } from "./demos";
+import { WarmAssistant } from "./_components/WarmAssistant";
 
 // Dark-interior chat UI preview — contrasts nicely against the light card.
 function DemoPreview() {
@@ -29,6 +30,7 @@ function DemoPreview() {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-paper text-ink">
+      <WarmAssistant />
 
       {/* Sticky header */}
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line-light bg-paper/90 px-5 py-3.5 backdrop-blur-sm sm:px-10">
