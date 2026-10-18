@@ -7,7 +7,7 @@ test("a demo's intro opens on the first visit, not again once dismissed, and reo
   await page.goto("/assistant");
   const intro = page.getByTestId("demo-intro");
   await expect(intro).toBeVisible();
-  await intro.getByRole("button", { name: "Got it" }).click();
+  await intro.getByRole("button", { name: "Start exploring" }).click();
   await expect(intro).toBeHidden();
 
   await page.reload();
@@ -20,7 +20,7 @@ test("a demo's intro opens on the first visit, not again once dismissed, and reo
 
 test("each demo keeps its own seen state", async ({ page }) => {
   await page.goto("/assistant");
-  await page.getByTestId("demo-intro").getByRole("button", { name: "Got it" }).click();
+  await page.getByTestId("demo-intro").getByRole("button", { name: "Start exploring" }).click();
   await page.goto("/sql");
   await expect(page.getByTestId("demo-intro")).toBeVisible();
 });

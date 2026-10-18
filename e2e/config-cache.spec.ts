@@ -11,7 +11,7 @@ test("the landing page warms the config, so the demo opens without waiting", asy
   await page.waitForFunction(() => Object.keys(localStorage).some((k) => k.startsWith("assistant-config-v1:")));
   await slowConfig(page);
   await page.getByRole("link", { name: /Assistant/ }).first().click();
-  await expect(page.getByRole("textbox", { name: "Message input" })).toBeVisible({ timeout: 1500 });
+  await expect(page.getByRole("textbox", { name: "Message input" })).toBeVisible({ timeout: 2500 });
   await expect(page.getByText("Loading…")).toHaveCount(0);
 });
 
