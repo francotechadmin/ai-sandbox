@@ -2,7 +2,7 @@
 // info button in its header. Leave `intro` off a demo to have neither.
 export type DemoIntroIcon = "brain" | "wrench" | "sliders" | "database" | "code" | "chart";
 
-export type DemoIntro = {
+type DemoIntro = {
   title?: string; // defaults to the demo's name
   tagline: string; // one line under the title
   highlights: { icon: DemoIntroIcon; title: string; text: string }[]; // what makes it worth a look
@@ -10,7 +10,7 @@ export type DemoIntro = {
   stack?: string[]; // technologies, shown as chips
 };
 
-export type Demo = {
+type Demo = {
   slug: string;
   name: string;
   description: string;
