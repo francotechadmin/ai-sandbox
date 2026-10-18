@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function openAssistant(page: Page) {
   await page.goto("/assistant");
+  await page.getByTestId("open-settings").click();
   await expect(page.getByTestId("settings")).toBeVisible();
 }
 
@@ -114,6 +115,7 @@ test("the system prompt persists across reloads; new chat and reset work", async
   await idle(page);
 
   await page.reload();
+  await page.getByTestId("open-settings").click();
   await expect(page.locator("#system-prompt")).toHaveValue("Be terse.");
   await page.getByTestId("new-chat").click();
   await expect(userMessages(page)).toHaveCount(0);
