@@ -41,6 +41,20 @@ test("settings opens as a bottom drawer on a phone and closes on Escape", async 
   await expect(drawer).toBeHidden();
 });
 
+test("the drawer handle stays visible while the drawer scrolls", async ({ page }) => {
+  await page.goto("/sql");
+  await page.getByRole("button", { name: "Settings" }).click();
+  const drawer = page.getByTestId("settings");
+  await expectBottomDrawer(drawer);
+  const handle = page.getByTestId("drawer-handle");
+  const top = (await drawer.boundingBox())!.y;
+  await drawer.evaluate((el) => (el.scrollTop = el.scrollHeight));
+  expect(await drawer.evaluate((el) => el.scrollTop)).toBeGreaterThan(100); // it really scrolled
+  const h = (await handle.boundingBox())!;
+  expect(Math.abs(h.y - top)).toBeLessThan(2);
+  await expect(handle).toBeInViewport();
+});
+
 test("the database panel is a drawer on a phone", async ({ page }) => {
   await page.goto("/sql");
   await page.getByRole("button", { name: "Database" }).click();

@@ -67,7 +67,7 @@ export function ResponsiveDialogContent({
               className,
             )}
           >
-            <div className="flex justify-center pt-2.5 pb-1" aria-hidden>
+            <div className="bg-panel sticky top-0 z-10 flex justify-center pt-2.5 pb-1" data-testid="drawer-handle" aria-hidden>
               <div className="h-1 w-10 rounded-full bg-white/20" />
             </div>
             <Drawer.Content>{children}</Drawer.Content>
