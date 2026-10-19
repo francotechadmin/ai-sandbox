@@ -2,7 +2,12 @@
 
 import { useEffect, useState, type ComponentType } from "react";
 import { BrainIcon, ChartLineIcon, CodeIcon, DatabaseIcon, InfoIcon, SlidersHorizontalIcon, WrenchIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { DEMOS, type DemoIntroIcon } from "../demos";
 
@@ -57,12 +62,12 @@ export function DemoIntro({ slug }: { slug: string }) {
         onClick={() => setOpen(true)}
         aria-label={`About ${demo.name}`}
         data-testid="demo-intro-open"
-        className="flex size-8 items-center justify-center rounded-full border border-white/15 text-text/70 transition-colors hover:border-white/30 hover:bg-white/[0.04] hover:text-text"
+        className="flex size-8 shrink-0 items-center justify-center rounded-full border border-white/15 text-text/70 transition-colors hover:border-white/30 hover:bg-white/[0.04] hover:text-text"
       >
         <InfoIcon className="size-4" />
       </button>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent data-testid="demo-intro" showCloseButton={false} className="gap-0 overflow-hidden p-0 sm:max-w-lg">
+      <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+        <ResponsiveDialogContent data-testid="demo-intro" className="sm:max-w-lg">
           <div className="relative isolate overflow-hidden border-b border-line px-6 pt-7 pb-6">
             <div
               className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-50 [mask-image:linear-gradient(to_bottom,black,transparent)]"
@@ -70,10 +75,10 @@ export function DemoIntro({ slug }: { slug: string }) {
               aria-hidden
             />
             <p className="mb-2 text-[11px] font-medium tracking-[0.18em] text-text/45 uppercase">Demo</p>
-            <DialogTitle className="font-display text-[1.65rem] leading-tight font-semibold tracking-[-0.02em]">
+            <ResponsiveDialogTitle className="font-display text-[1.65rem] leading-tight font-semibold tracking-[-0.02em]">
               {intro.title ?? demo.name}
-            </DialogTitle>
-            <DialogDescription className="mt-2 text-[15px] text-text/70">{intro.tagline}</DialogDescription>
+            </ResponsiveDialogTitle>
+            <ResponsiveDialogDescription className="mt-2 text-[15px] text-text/70">{intro.tagline}</ResponsiveDialogDescription>
           </div>
 
           <div className="flex flex-col gap-5 px-6 py-5">
@@ -112,11 +117,11 @@ export function DemoIntro({ slug }: { slug: string }) {
             )}
           </div>
 
-          <div className="flex justify-end border-t border-line bg-white/[0.02] px-6 py-4">
+          <div className="border-line bg-panel sticky bottom-0 flex justify-end border-t px-6 py-4">
             <Button onClick={() => onOpenChange(false)}>Start exploring</Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </>
   );
 }

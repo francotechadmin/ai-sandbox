@@ -16,10 +16,10 @@ export function DemoSwitcher({ slug, label }: { slug: string; label?: string }) 
     <Menu.Root>
       <Menu.Trigger
         data-testid="demo-switcher"
-        className="flex items-center gap-1 rounded-full px-2 py-1 text-[14px] font-medium tracking-tight text-text outline-none transition-colors hover:bg-white/[0.06] data-popup-open:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-white/30"
+        className="flex min-w-0 items-center gap-1 rounded-full px-2 py-1 text-[14px] font-medium tracking-tight text-text outline-none transition-colors hover:bg-white/[0.06] data-popup-open:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-white/30"
       >
-        {label ?? current?.name ?? slug}
-        <ChevronDownIcon className="size-3.5 text-text/50" aria-hidden />
+        <span className="truncate">{label ?? current?.name ?? slug}</span>
+        <ChevronDownIcon className="size-3.5 shrink-0 text-text/50" aria-hidden />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner align="start" sideOffset={8} className="z-50">

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, SettingsIcon } from "lucide-react";
+import { HeaderButton } from "@/app/_components/HeaderButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Chat } from "./components/Chat";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -72,23 +73,8 @@ export default function AssistantPage() {
       loadingSkeleton={<ChatSkeleton />}
       headerActions={
         <>
-          <button
-            type="button"
-            onClick={newChat}
-            className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-[13px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
-            aria-label="New chat"
-          >
-            <PlusIcon className="size-3.5" />
-            New
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSettings(true)}
-            className="rounded-full border border-white/15 px-3.5 py-1.5 text-[13px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
-            data-testid="open-settings"
-          >
-            Settings
-          </button>
+          <HeaderButton icon={PlusIcon} label="New" aria-label="New chat" onClick={newChat} />
+          <HeaderButton icon={SettingsIcon} label="Settings" onClick={() => setShowSettings(true)} data-testid="open-settings" />
         </>
       }
       panels={
