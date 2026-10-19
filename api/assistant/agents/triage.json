@@ -1,0 +1,286 @@
+{
+  "name": "Trade Break Triage",
+  "systemPrompt": "You are a trade-ops assistant. Work the break start to finish using your tools. Every claim cites its source. You draft — a human approves. Never execute. For each break: (1) read it, say what's wrong in one line, list what you need: trade record, market data, procedure. (2) Pull them with your tools, showing each call. (3) Cross-check the evidence, name the cause. (4) Draft the fix with citations. If the evidence doesn't support a conclusion, say what's missing instead of guessing.\n\nTools: list_open_breaks (read the break), get_trade_details, get_market_snapshot, search_procedures, draft_resolution. Cite as [break BRK-nnnn], [trade T-nnnnn], [market <product> <date>] and [SOP-nn]. Call draft_resolution for step 4 only; after it, add one line, not a repeat of the draft. A settlement price is a sanity check on a trade, not proof of the traded price.",
+  "defaultModel": "claude-haiku-4-5",
+  "tools": [
+    "list_open_breaks",
+    "get_trade_details",
+    "get_market_snapshot",
+    "search_procedures",
+    "draft_resolution"
+  ],
+  "restrict": true,
+  "placeholder": "Pick a prompt to continue.",
+  "endNote": "That's the triage.",
+  "prompts": [
+    {
+      "title": "Investigate this break",
+      "label": "read it, pull the evidence, name the cause",
+      "prompt": "Investigate break {break_id}. Steps 1-3 only: say what's wrong in one line, list what you need, pull it with your tools, cross-check and name the cause. Don't draft yet.",
+      "followUps": [
+        {
+          "title": "Check the settlement price",
+          "prompt": "Now check the settlement price for the trade date against both the booked and the counterparty price.",
+          "followUps": [
+            {
+              "title": "Which procedure applies?",
+              "prompt": "Which procedure applies, and what does it say I must do here? Cite the SOP.",
+              "followUps": [
+                {
+                  "title": "Draft the resolution",
+                  "prompt": "Draft the resolution now with draft_resolution.",
+                  "followUps": [
+                    {
+                      "title": "How confident are you?",
+                      "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                      "followUps": [
+                        {
+                          "title": "What's still missing?",
+                          "prompt": "What evidence is still missing or unverified before this can be approved?",
+                          "followUps": []
+                        }
+                      ]
+                    },
+                    {
+                      "title": "What's still missing?",
+                      "prompt": "What evidence is still missing or unverified before this can be approved?",
+                      "followUps": [
+                        {
+                          "title": "How confident are you?",
+                          "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                          "followUps": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Draft the resolution",
+              "prompt": "Draft the resolution now with draft_resolution.",
+              "followUps": [
+                {
+                  "title": "How confident are you?",
+                  "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                  "followUps": [
+                    {
+                      "title": "What's still missing?",
+                      "prompt": "What evidence is still missing or unverified before this can be approved?",
+                      "followUps": []
+                    }
+                  ]
+                },
+                {
+                  "title": "What's still missing?",
+                  "prompt": "What evidence is still missing or unverified before this can be approved?",
+                  "followUps": [
+                    {
+                      "title": "How confident are you?",
+                      "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                      "followUps": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Which procedure applies?",
+          "prompt": "Which procedure applies, and what does it say I must do here? Cite the SOP.",
+          "followUps": [
+            {
+              "title": "Check the settlement price",
+              "prompt": "Now check the settlement price for the trade date against both the booked and the counterparty price.",
+              "followUps": [
+                {
+                  "title": "Draft the resolution",
+                  "prompt": "Draft the resolution now with draft_resolution.",
+                  "followUps": [
+                    {
+                      "title": "How confident are you?",
+                      "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                      "followUps": [
+                        {
+                          "title": "What's still missing?",
+                          "prompt": "What evidence is still missing or unverified before this can be approved?",
+                          "followUps": []
+                        }
+                      ]
+                    },
+                    {
+                      "title": "What's still missing?",
+                      "prompt": "What evidence is still missing or unverified before this can be approved?",
+                      "followUps": [
+                        {
+                          "title": "How confident are you?",
+                          "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                          "followUps": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Draft the resolution",
+              "prompt": "Draft the resolution now with draft_resolution.",
+              "followUps": [
+                {
+                  "title": "How confident are you?",
+                  "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                  "followUps": [
+                    {
+                      "title": "What's still missing?",
+                      "prompt": "What evidence is still missing or unverified before this can be approved?",
+                      "followUps": []
+                    }
+                  ]
+                },
+                {
+                  "title": "What's still missing?",
+                  "prompt": "What evidence is still missing or unverified before this can be approved?",
+                  "followUps": [
+                    {
+                      "title": "How confident are you?",
+                      "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                      "followUps": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Draft the resolution",
+          "prompt": "Draft the resolution now with draft_resolution.",
+          "followUps": [
+            {
+              "title": "How confident are you?",
+              "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+              "followUps": [
+                {
+                  "title": "What's still missing?",
+                  "prompt": "What evidence is still missing or unverified before this can be approved?",
+                  "followUps": []
+                }
+              ]
+            },
+            {
+              "title": "What's still missing?",
+              "prompt": "What evidence is still missing or unverified before this can be approved?",
+              "followUps": [
+                {
+                  "title": "How confident are you?",
+                  "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                  "followUps": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Check the settlement price",
+      "label": "against the booked and counterparty price",
+      "prompt": "For break {break_id}: read the break, then pull the settlement price for its product and trade date and compare it to both the booked and the counterparty price.",
+      "followUps": [
+        {
+          "title": "Which procedure applies?",
+          "prompt": "Which procedure applies, and what does it say I must do here? Cite the SOP.",
+          "followUps": [
+            {
+              "title": "Draft the resolution",
+              "prompt": "Draft the resolution now with draft_resolution.",
+              "followUps": [
+                {
+                  "title": "How confident are you?",
+                  "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                  "followUps": [
+                    {
+                      "title": "What's still missing?",
+                      "prompt": "What evidence is still missing or unverified before this can be approved?",
+                      "followUps": []
+                    }
+                  ]
+                },
+                {
+                  "title": "What's still missing?",
+                  "prompt": "What evidence is still missing or unverified before this can be approved?",
+                  "followUps": [
+                    {
+                      "title": "How confident are you?",
+                      "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                      "followUps": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Draft the resolution",
+          "prompt": "Draft the resolution now with draft_resolution.",
+          "followUps": [
+            {
+              "title": "How confident are you?",
+              "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+              "followUps": [
+                {
+                  "title": "What's still missing?",
+                  "prompt": "What evidence is still missing or unverified before this can be approved?",
+                  "followUps": []
+                }
+              ]
+            },
+            {
+              "title": "What's still missing?",
+              "prompt": "What evidence is still missing or unverified before this can be approved?",
+              "followUps": [
+                {
+                  "title": "How confident are you?",
+                  "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+                  "followUps": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Draft the resolution",
+      "label": "evidence, cause and proposed fix for approval",
+      "prompt": "Draft the resolution for break {break_id}. Pull whatever evidence you still need, then call draft_resolution.",
+      "followUps": [
+        {
+          "title": "How confident are you?",
+          "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+          "followUps": [
+            {
+              "title": "What's still missing?",
+              "prompt": "What evidence is still missing or unverified before this can be approved?",
+              "followUps": []
+            }
+          ]
+        },
+        {
+          "title": "What's still missing?",
+          "prompt": "What evidence is still missing or unverified before this can be approved?",
+          "followUps": [
+            {
+              "title": "How confident are you?",
+              "prompt": "How confident are you in this cause, and what evidence would change your mind?",
+              "followUps": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

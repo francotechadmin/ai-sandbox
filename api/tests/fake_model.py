@@ -57,6 +57,23 @@ class ScriptedChatModel(BaseChatModel):
         names = [t.get("name") if isinstance(t, dict) else getattr(t, "name", None) for t in tools]
         return self.model_copy(update={"tool_names": [n for n in names if n]})
 
+    def _scripted_call(self, human: str) -> tuple[str, dict[str, Any]] | None:
+        """The one tool call the scripted model makes for this message, if its tool is enabled."""
+        lower = human.lower()
+        match = _EXPR.search(human)
+        if match and "calc" in lower and "calculator" in self.tool_names:
+            return "calculator", {"expression": match.group(0).strip()}
+        break_id = re.search(r"BRK-\d+", human)
+        if "draft_resolution" in self.tool_names and "draft the resolution" in lower:
+            return "draft_resolution", {
+                "break_id": break_id.group(0) if break_id else "BRK-1001",
+                "summary": "Booked price is a digit transposition of the confirmed price [trade T-77101].",
+                "proposed_action": "Amend the booked price to the confirmed price and re-match.",
+            }
+        if "get_market_snapshot" in self.tool_names and "settlement price" in lower:
+            return "get_market_snapshot", {"product": "WTI Crude", "date": "2025-09-10"}
+        return None
+
     def _generate(self, messages, stop=None, run_manager=None, **kwargs) -> ChatResult:
         return generate_from_stream(self._stream(messages, stop, run_manager, **kwargs))
 
@@ -95,16 +112,15 @@ class ScriptedChatModel(BaseChatModel):
             yield chunk(content=[{"type": "thinking", "thinking": word, "index": index}])
         index += 1
 
-        match = _EXPR.search(human)
-        if tool_msg is None and match and "calc" in human.lower() and "calculator" in self.tool_names:
+        scripted = self._scripted_call(human) if tool_msg is None else None
+        if scripted:
+            name, call_args = scripted
+            call_id = f"call_{uuid.uuid4().hex[:8]}"  # unique per call, as with real providers
             yield chunk(
-                content=[
-                    {"type": "tool_use", "id": "call_scripted_1", "name": "calculator", "input": {}, "index": index}
-                ],
-                tool_call_chunks=[{"name": "calculator", "args": "", "id": "call_scripted_1", "index": index}],
+                content=[{"type": "tool_use", "id": call_id, "name": name, "input": {}, "index": index}],
+                tool_call_chunks=[{"name": name, "args": "", "id": call_id, "index": index}],
             )
-            expr = match.group(0).strip()
-            args = json.dumps({"expression": expr})
+            args = json.dumps(call_args)
             for i in range(0, len(args), 8):
                 part = args[i : i + 8]
                 yield chunk(

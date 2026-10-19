@@ -1,0 +1,842 @@
+[
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-02",
+  "price": 64.69,
+  "unit": "USD/bbl",
+  "volume": 269318,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-03",
+  "price": 63.18,
+  "unit": "USD/bbl",
+  "volume": 209446,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-04",
+  "price": 63.49,
+  "unit": "USD/bbl",
+  "volume": 256915,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-05",
+  "price": 63.35,
+  "unit": "USD/bbl",
+  "volume": 320917,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-08",
+  "price": 64.59,
+  "unit": "USD/bbl",
+  "volume": 255594,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-09",
+  "price": 65.04,
+  "unit": "USD/bbl",
+  "volume": 205679,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-10",
+  "price": 64.31,
+  "unit": "USD/bbl",
+  "volume": 204518,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-11",
+  "price": 64.55,
+  "unit": "USD/bbl",
+  "volume": 240219,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-12",
+  "price": 64.99,
+  "unit": "USD/bbl",
+  "volume": 326428,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-15",
+  "price": 65.23,
+  "unit": "USD/bbl",
+  "volume": 183427,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-16",
+  "price": 65.35,
+  "unit": "USD/bbl",
+  "volume": 201852,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-17",
+  "price": 65.62,
+  "unit": "USD/bbl",
+  "volume": 182568,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-18",
+  "price": 65.45,
+  "unit": "USD/bbl",
+  "volume": 227093,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-19",
+  "price": 65.97,
+  "unit": "USD/bbl",
+  "volume": 312505,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-22",
+  "price": 65.35,
+  "unit": "USD/bbl",
+  "volume": 324635,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-23",
+  "price": 66.21,
+  "unit": "USD/bbl",
+  "volume": 189833,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-24",
+  "price": 66.27,
+  "unit": "USD/bbl",
+  "volume": 317408,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-25",
+  "price": 65.86,
+  "unit": "USD/bbl",
+  "volume": 280413,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-26",
+  "price": 65.52,
+  "unit": "USD/bbl",
+  "volume": 266107,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-29",
+  "price": 64.58,
+  "unit": "USD/bbl",
+  "volume": 187849,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "WTI Crude",
+  "date": "2025-09-30",
+  "price": 64.56,
+  "unit": "USD/bbl",
+  "volume": 266493,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-02",
+  "price": 68.35,
+  "unit": "USD/bbl",
+  "volume": 159460,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-03",
+  "price": 70.44,
+  "unit": "USD/bbl",
+  "volume": 246551,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-04",
+  "price": 71.38,
+  "unit": "USD/bbl",
+  "volume": 196311,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-05",
+  "price": 71.87,
+  "unit": "USD/bbl",
+  "volume": 156451,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-08",
+  "price": 73.32,
+  "unit": "USD/bbl",
+  "volume": 202720,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-09",
+  "price": 72.58,
+  "unit": "USD/bbl",
+  "volume": 233499,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-10",
+  "price": 72.66,
+  "unit": "USD/bbl",
+  "volume": 253155,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-11",
+  "price": 72.08,
+  "unit": "USD/bbl",
+  "volume": 165280,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-12",
+  "price": 71.15,
+  "unit": "USD/bbl",
+  "volume": 217572,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-15",
+  "price": 70.5,
+  "unit": "USD/bbl",
+  "volume": 229647,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-16",
+  "price": 71.19,
+  "unit": "USD/bbl",
+  "volume": 255424,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-17",
+  "price": 70.87,
+  "unit": "USD/bbl",
+  "volume": 270865,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-18",
+  "price": 70.62,
+  "unit": "USD/bbl",
+  "volume": 168455,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-19",
+  "price": 70.46,
+  "unit": "USD/bbl",
+  "volume": 265322,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-22",
+  "price": 69.76,
+  "unit": "USD/bbl",
+  "volume": 230269,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-23",
+  "price": 69.47,
+  "unit": "USD/bbl",
+  "volume": 171593,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-24",
+  "price": 71.47,
+  "unit": "USD/bbl",
+  "volume": 253525,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-25",
+  "price": 71.58,
+  "unit": "USD/bbl",
+  "volume": 259858,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-26",
+  "price": 72.11,
+  "unit": "USD/bbl",
+  "volume": 278312,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-29",
+  "price": 71.47,
+  "unit": "USD/bbl",
+  "volume": 221588,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Brent Crude",
+  "date": "2025-09-30",
+  "price": 72.35,
+  "unit": "USD/bbl",
+  "volume": 209022,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-02",
+  "price": 2.989,
+  "unit": "USD/MMBtu",
+  "volume": 106029,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-03",
+  "price": 3.026,
+  "unit": "USD/MMBtu",
+  "volume": 113418,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-04",
+  "price": 2.985,
+  "unit": "USD/MMBtu",
+  "volume": 189450,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-05",
+  "price": 3.047,
+  "unit": "USD/MMBtu",
+  "volume": 148477,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-08",
+  "price": 3.196,
+  "unit": "USD/MMBtu",
+  "volume": 170363,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-09",
+  "price": 3.186,
+  "unit": "USD/MMBtu",
+  "volume": 130129,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-10",
+  "price": 3.193,
+  "unit": "USD/MMBtu",
+  "volume": 107052,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-11",
+  "price": 3.251,
+  "unit": "USD/MMBtu",
+  "volume": 181440,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-12",
+  "price": 3.201,
+  "unit": "USD/MMBtu",
+  "volume": 94824,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-15",
+  "price": 3.111,
+  "unit": "USD/MMBtu",
+  "volume": 136656,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-16",
+  "price": 3.131,
+  "unit": "USD/MMBtu",
+  "volume": 189491,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-17",
+  "price": 3.227,
+  "unit": "USD/MMBtu",
+  "volume": 109035,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-18",
+  "price": 3.138,
+  "unit": "USD/MMBtu",
+  "volume": 125211,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-19",
+  "price": 3.144,
+  "unit": "USD/MMBtu",
+  "volume": 134724,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-22",
+  "price": 3.241,
+  "unit": "USD/MMBtu",
+  "volume": 145091,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-23",
+  "price": 3.277,
+  "unit": "USD/MMBtu",
+  "volume": 185240,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-24",
+  "price": 3.319,
+  "unit": "USD/MMBtu",
+  "volume": 102546,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-25",
+  "price": 3.2,
+  "unit": "USD/MMBtu",
+  "volume": 169983,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-26",
+  "price": 3.185,
+  "unit": "USD/MMBtu",
+  "volume": 163002,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-29",
+  "price": 3.24,
+  "unit": "USD/MMBtu",
+  "volume": 157796,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "Henry Hub Natural Gas",
+  "date": "2025-09-30",
+  "price": 3.195,
+  "unit": "USD/MMBtu",
+  "volume": 177206,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-02",
+  "price": 2.0009,
+  "unit": "USD/gal",
+  "volume": 68790,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-03",
+  "price": 2.037,
+  "unit": "USD/gal",
+  "volume": 115774,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-04",
+  "price": 2.0122,
+  "unit": "USD/gal",
+  "volume": 69673,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-05",
+  "price": 2.016,
+  "unit": "USD/gal",
+  "volume": 114452,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-08",
+  "price": 2.0754,
+  "unit": "USD/gal",
+  "volume": 90337,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-09",
+  "price": 2.0277,
+  "unit": "USD/gal",
+  "volume": 70798,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-10",
+  "price": 2.0201,
+  "unit": "USD/gal",
+  "volume": 69823,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-11",
+  "price": 1.9941,
+  "unit": "USD/gal",
+  "volume": 105302,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-12",
+  "price": 2.0075,
+  "unit": "USD/gal",
+  "volume": 106673,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-15",
+  "price": 2.002,
+  "unit": "USD/gal",
+  "volume": 74878,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-16",
+  "price": 1.9655,
+  "unit": "USD/gal",
+  "volume": 84939,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-17",
+  "price": 1.9891,
+  "unit": "USD/gal",
+  "volume": 97600,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-18",
+  "price": 2.0079,
+  "unit": "USD/gal",
+  "volume": 89628,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-19",
+  "price": 2.0179,
+  "unit": "USD/gal",
+  "volume": 97747,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-22",
+  "price": 2.0162,
+  "unit": "USD/gal",
+  "volume": 102332,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-23",
+  "price": 1.9905,
+  "unit": "USD/gal",
+  "volume": 78590,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-24",
+  "price": 1.9412,
+  "unit": "USD/gal",
+  "volume": 114548,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-25",
+  "price": 1.938,
+  "unit": "USD/gal",
+  "volume": 67008,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-26",
+  "price": 1.9624,
+  "unit": "USD/gal",
+  "volume": 103562,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-29",
+  "price": 1.9459,
+  "unit": "USD/gal",
+  "volume": 100367,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "RBOB Gasoline",
+  "date": "2025-09-30",
+  "price": 1.9698,
+  "unit": "USD/gal",
+  "volume": 87199,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-02",
+  "price": 2.3755,
+  "unit": "USD/gal",
+  "volume": 97394,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-03",
+  "price": 2.376,
+  "unit": "USD/gal",
+  "volume": 60273,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-04",
+  "price": 2.3786,
+  "unit": "USD/gal",
+  "volume": 85808,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-05",
+  "price": 2.3251,
+  "unit": "USD/gal",
+  "volume": 64854,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-08",
+  "price": 2.4032,
+  "unit": "USD/gal",
+  "volume": 95729,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-09",
+  "price": 2.402,
+  "unit": "USD/gal",
+  "volume": 97487,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-10",
+  "price": 2.4291,
+  "unit": "USD/gal",
+  "volume": 60267,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-11",
+  "price": 2.4151,
+  "unit": "USD/gal",
+  "volume": 55156,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-12",
+  "price": 2.3807,
+  "unit": "USD/gal",
+  "volume": 62856,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-15",
+  "price": 2.3591,
+  "unit": "USD/gal",
+  "volume": 84794,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-16",
+  "price": 2.3443,
+  "unit": "USD/gal",
+  "volume": 65967,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-17",
+  "price": 2.3134,
+  "unit": "USD/gal",
+  "volume": 85537,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-18",
+  "price": 2.3239,
+  "unit": "USD/gal",
+  "volume": 60840,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-19",
+  "price": 2.3126,
+  "unit": "USD/gal",
+  "volume": 103976,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-22",
+  "price": 2.3313,
+  "unit": "USD/gal",
+  "volume": 64361,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-23",
+  "price": 2.3965,
+  "unit": "USD/gal",
+  "volume": 80508,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-24",
+  "price": 2.3503,
+  "unit": "USD/gal",
+  "volume": 68926,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-25",
+  "price": 2.3279,
+  "unit": "USD/gal",
+  "volume": 92173,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-26",
+  "price": 2.3293,
+  "unit": "USD/gal",
+  "volume": 92462,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-29",
+  "price": 2.2671,
+  "unit": "USD/gal",
+  "volume": 71132,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ },
+ {
+  "product": "ULSD Heating Oil",
+  "date": "2025-09-30",
+  "price": 2.3058,
+  "unit": "USD/gal",
+  "volume": 87754,
+  "source": "PLACEHOLDER - illustrative values, NOT real market data. Run scripts/fetch_market_snapshots.py to replace with EIA data."
+ }
+]

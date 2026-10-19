@@ -22,6 +22,23 @@ type Demo = {
 // landing page needs to know about it.
 export const DEMOS: Demo[] = [
   {
+    slug: "triage",
+    name: "Trade Break Triage",
+    description:
+      "An ops analyst opens a trade break; the agent pulls the trade record, market data and procedures with live tool calls, names the cause, and drafts a resolution for human approval. It drafts only, and never executes.",
+    status: "live",
+    intro: {
+      tagline: "Work a trade break with an agent that cites its evidence and leaves the decision to you.",
+      highlights: [
+        { icon: "wrench", title: "Evidence, not guesses", text: "The agent reads the break, then pulls the trade record, settlement price and the right procedure. Every call shows as it happens." },
+        { icon: "database", title: "Cited conclusions", text: "Each claim points at its source: the trade, the market snapshot or an SOP. If the evidence falls short, it says what is missing." },
+        { icon: "sliders", title: "A human approves", text: "The fix arrives as a draft with Approve, Reject and Edit. The agent can't execute anything." },
+      ],
+      howTo: "A break is already open. Pick a starter prompt, then a follow-up, and finish with Draft the resolution. Use Breaks to try another of the 12 scenarios.",
+      stack: ["Next.js", "FastAPI", "LangGraph", "Claude"],
+    },
+  },
+  {
     slug: "sql",
     name: "World Bank Explorer",
     description:

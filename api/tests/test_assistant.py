@@ -475,6 +475,7 @@ def test_agents_are_listed_from_their_files(other_agent):
         {"id": "assistant", "name": "Assistant"},
         {"id": "sql", "name": "World Bank Explorer"},
         {"id": "terse", "name": "Terse"},
+        {"id": "triage", "name": "Trade Break Triage"},
     ]
 
 

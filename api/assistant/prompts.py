@@ -11,6 +11,7 @@
 # development, tests).
 
 import os
+import re
 
 from pydantic import BaseModel, ConfigDict
 
@@ -22,7 +23,7 @@ class Prompt(BaseModel):
 
     title: str  # short button text
     label: str = ""  # muted text after the title on the opening list
-    prompt: str  # the message that is sent
+    prompt: str  # the message that is sent; "{name}" stands for an id the UI fills in (e.g. the open break)
     followUps: list["Prompt"] = []
 
 
@@ -39,6 +40,13 @@ def _normalize(text: str) -> str:
     return " ".join(text.split())
 
 
+def _matches(prompt: str, text: str) -> bool:
+    """Whether `text` is this prompt, with each "{name}" placeholder filled by an id like BRK-1001."""
+    parts = re.split(r"\{\w+\}", _normalize(prompt))
+    pattern = r"[A-Za-z0-9_-]{1,32}".join(re.escape(part) for part in parts)
+    return re.fullmatch(pattern, _normalize(text)) is not None
+
+
 def restricted(config: PromptConfig) -> bool:
     return config.restrict and os.environ.get(ALLOW_ANY_ENV) != "1"
 
@@ -49,7 +57,7 @@ def allows(texts: list[str], config: PromptConfig) -> bool:
         return True
     choices = config.prompts
     for text in texts:
-        node = next((p for p in choices if _normalize(p.prompt) == _normalize(text)), None)
+        node = next((p for p in choices if _matches(p.prompt, text)), None)
         if node is None:
             return False
         choices = node.followUps

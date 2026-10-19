@@ -38,6 +38,7 @@ tsconfig.json                # strict TypeScript across the frontend
 
 | Demo | What it shows |
 |---|---|
+| [`triage`](./app/triage) | A trade-break triage agent: live tool calls over trade, market and SOP data, cited conclusions, and a draft resolution a human approves, edits or rejects. Drafts only. |
 | [`assistant`](./app/assistant) | A streaming chat agent: model picker, backend-handled reasoning, live tool-call rendering, and a system prompt edited in the UI. |
 
 ## Adding a new demo

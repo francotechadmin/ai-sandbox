@@ -1,0 +1,134 @@
+[
+ {
+  "id": "BRK-1001",
+  "trade_id": "T-77101",
+  "counterparty": "Meridian Commodities LLC",
+  "product": "WTI Crude",
+  "quantity": 25000,
+  "price": 63.45,
+  "trade_date": "2025-09-10",
+  "break_reason": "Price mismatch: internal 63.45 vs counterparty confirmation 64.35 (diff 0.90 USD/bbl). Quantity, date and counterparty match.",
+  "severity": "medium"
+ },
+ {
+  "id": "BRK-1002",
+  "trade_id": "T-77102",
+  "counterparty": "Bayou Refining Co.",
+  "product": "Brent Crude",
+  "quantity": 50000,
+  "price": 72.14,
+  "trade_date": "2025-09-11",
+  "break_reason": "Quantity mismatch: internal 50,000 bbl vs counterparty confirmation 5,000 bbl. Price, date and counterparty match.",
+  "severity": "high"
+ },
+ {
+  "id": "BRK-1003",
+  "trade_id": "T-77103",
+  "counterparty": "Harbor Point Capital",
+  "product": "Henry Hub Natural Gas",
+  "quantity": 100000,
+  "price": 3.196,
+  "trade_date": "2025-09-09",
+  "break_reason": "Counterparty mismatch: booked as Harbor Point Capital, confirmation sent by Harbor Point Energy Marketing (different LEI). Price, quantity and date match.",
+  "severity": "high"
+ },
+ {
+  "id": "BRK-1004",
+  "trade_id": "T-77104",
+  "counterparty": "Lakeshore Fuels Inc.",
+  "product": "RBOB Gasoline",
+  "quantity": 210000,
+  "price": 1.9675,
+  "trade_date": "2025-09-16",
+  "break_reason": "Unmatched: no counterparty confirmation received 3 business days after trade date. Never chased.",
+  "severity": "medium"
+ },
+ {
+  "id": "BRK-1005",
+  "trade_id": "T-77105",
+  "counterparty": "Northgate Energy Trading LLC",
+  "product": "ULSD Heating Oil",
+  "quantity": 126000,
+  "price": 2.3847,
+  "trade_date": "2025-09-13",
+  "break_reason": "Trade date mismatch: internal 2025-09-13 vs counterparty confirmation 2025-09-12. Price, quantity and counterparty match.",
+  "severity": "low"
+ },
+ {
+  "id": "BRK-1006",
+  "trade_id": "T-77106",
+  "counterparty": "Cascade Midstream Partners LP",
+  "product": "WTI Crude",
+  "quantity": 10000,
+  "price": 65.5,
+  "trade_date": "2025-09-17",
+  "break_reason": "Price mismatch: internal 65.50 vs counterparty confirmation 65.80 (diff 0.30 USD/bbl). Quantity, date and counterparty match.",
+  "severity": "low"
+ },
+ {
+  "id": "BRK-1007",
+  "trade_id": "T-77108",
+  "counterparty": "Meridian Commodities LLC",
+  "product": "RBOB Gasoline",
+  "quantity": 126000,
+  "price": 2.0109,
+  "trade_date": "2025-09-18",
+  "break_reason": "Over-booked: two internal trades (T-77107, T-77108) against one counterparty confirmation for 126,000 gal.",
+  "severity": "medium"
+ },
+ {
+  "id": "BRK-1008",
+  "trade_id": "T-77109",
+  "counterparty": "Summit Peak Resources",
+  "product": "Brent Crude",
+  "quantity": 20000,
+  "price": 70.66,
+  "trade_date": "2025-09-19",
+  "break_reason": "Contract month and price mismatch: internal Nov-25 @ 70.66 vs confirmation Dec-25 @ 70.11. Quantity, date and counterparty match.",
+  "severity": "medium"
+ },
+ {
+  "id": "BRK-1009",
+  "trade_id": "T-77110",
+  "counterparty": "Bayou Refining Co.",
+  "product": "Henry Hub Natural Gas",
+  "quantity": 150000,
+  "price": 3.246,
+  "trade_date": "2025-09-22",
+  "break_reason": "Price mismatch: internal 3.246 vs counterparty confirmation 0.3246. Quantity, date and counterparty match.",
+  "severity": "low"
+ },
+ {
+  "id": "BRK-1010",
+  "trade_id": "T-77111",
+  "counterparty": "Northgate Energy Trading LLC",
+  "product": "WTI Crude",
+  "quantity": 250000,
+  "price": 68.12,
+  "trade_date": "2025-09-24",
+  "break_reason": "Price mismatch: internal 68.12 vs counterparty confirmation 66.34 (diff 1.78 USD/bbl) on 250,000 bbl. Quantity, date and counterparty match.",
+  "severity": "critical"
+ },
+ {
+  "id": "BRK-1011",
+  "trade_id": "T-77112",
+  "counterparty": "Summit Peak Resources",
+  "product": "Brent Crude",
+  "quantity": 30000,
+  "price": 69.52,
+  "trade_date": "2025-09-23",
+  "break_reason": "Confirmation received from Summit Peak Resources for a trade not found in the blotter. Matching engine could not pair it to any internal trade.",
+  "severity": "high"
+ },
+ {
+  "id": "BRK-1012",
+  "trade_id": "T-77113",
+  "counterparty": "Cascade Midstream Partners LP",
+  "product": "Henry Hub Natural Gas",
+  "quantity": 80000,
+  "price": 3.196,
+  "trade_date": "2025-09-25",
+  "break_reason": "Settlement date mismatch: internal 2025-10-01 vs counterparty confirmation 2025-09-30. Price, quantity and counterparty match.",
+  "severity": "low"
+ }
+]

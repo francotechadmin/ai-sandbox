@@ -13,6 +13,7 @@ from langchain_core.tools import BaseTool, tool
 from simpleeval import InvalidExpression, simple_eval
 
 from ..sql.seed import get_connection as _wb_conn
+from ..triage import tools as _triage
 
 # simpleeval's default exponent cap (4,000,000) still allows multi-second
 # integer powers; keep it small enough that a calculation can't tie up the server.
@@ -218,7 +219,20 @@ def create_chart(sql: str, title: str = "") -> str:
 
 TOOLS: dict[str, BaseTool] = {
     t.name: t
-    for t in (get_current_time, calculator, get_weather, list_crm_tables, get_table_schema, run_sql_query, create_chart)
+    for t in (
+        get_current_time,
+        calculator,
+        get_weather,
+        list_crm_tables,
+        get_table_schema,
+        run_sql_query,
+        create_chart,
+        _triage.list_open_breaks,
+        _triage.get_trade_details,
+        _triage.get_market_snapshot,
+        _triage.search_procedures,
+        _triage.draft_resolution,
+    )
 }
 
 
