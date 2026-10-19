@@ -1,6 +1,11 @@
 "use client";
 
 import { XIcon, PlusIcon } from "lucide-react";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import type { AssistantConfig, Settings } from "../lib/types";
 
 export function SettingsPanel({
@@ -18,23 +23,15 @@ export function SettingsPanel({
   onClose: () => void;
   isOpen: boolean;
 }) {
-  if (!isOpen) return null;
-
   const label = "text-[13px] font-medium text-text/80";
   const locked = config.restrictPrompts;
 
   return (
-    <>
-      {/* Backdrop – sm+ only; mobile is full-screen */}
-      <div className="hidden sm:block fixed inset-0 z-20 bg-black/50" onClick={onClose} aria-hidden />
-      {/* Mobile: full-screen | sm+: centered modal */}
-      <div className="fixed inset-0 z-30 overflow-y-auto bg-panel sm:flex sm:items-center sm:justify-center sm:overflow-visible sm:bg-transparent sm:p-4">
-        <div
-          className="flex min-h-full flex-col gap-5 p-5 sm:min-h-0 sm:w-full sm:max-w-sm sm:overflow-y-auto sm:rounded-2xl sm:border sm:border-line sm:bg-panel sm:p-5 sm:max-h-[85dvh]"
-          data-testid="settings"
-        >
+    <ResponsiveDialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <ResponsiveDialogContent data-testid="settings" className="sm:max-w-sm">
+        <div className="flex flex-col gap-5 p-5">
           <div className="flex items-center justify-between">
-            <span className="text-[14px] font-semibold">Settings</span>
+            <ResponsiveDialogTitle className="text-[14px] font-semibold">Settings</ResponsiveDialogTitle>
             <button
               type="button"
               onClick={onClose}
@@ -126,7 +123,7 @@ export function SettingsPanel({
             </p>
           </div>
         </div>
-      </div>
-    </>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

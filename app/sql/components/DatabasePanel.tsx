@@ -1,6 +1,7 @@
 "use client";
 
 import { XIcon } from "lucide-react";
+import { ResponsiveDialog, ResponsiveDialogContent, ResponsiveDialogTitle } from "@/components/ui/responsive-dialog";
 import { SchemaPanel } from "./SchemaPanel";
 
 const INDICATORS = [
@@ -21,20 +22,14 @@ export function DatabasePanel({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  if (!isOpen) return null;
-
   return (
-    <>
-      <div className="fixed inset-0 z-20 bg-black/50" onClick={onClose} aria-hidden />
-      <div className="fixed inset-0 z-30 flex items-center justify-center p-4">
-        <div
-          className="flex w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-line bg-panel"
-          style={{ maxHeight: "85dvh" }}
-        >
+    <ResponsiveDialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
+      <ResponsiveDialogContent data-testid="database">
+        <div className="flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-line px-5 py-4">
             <div>
-              <p className="text-[14px] font-semibold">World Bank Database</p>
+              <ResponsiveDialogTitle className="text-[14px] font-semibold">World Bank Database</ResponsiveDialogTitle>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 World Bank Open Data · 42 countries · 2000–2023
               </p>
@@ -80,7 +75,7 @@ export function DatabasePanel({
           {/* Schema */}
           <SchemaPanel />
         </div>
-      </div>
-    </>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

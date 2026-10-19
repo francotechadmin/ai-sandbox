@@ -26,9 +26,9 @@ export function AgentPageShell({
 }) {
   return (
     <div className="aui-app flex h-dvh flex-col bg-bg">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-line bg-panel px-4 sm:px-6">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-75">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-line bg-panel px-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
+          <Link href="/" aria-label="Home" className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-75">
             <div className="flex size-7 items-center justify-center rounded-full bg-text text-[10px] font-semibold tracking-wide text-bg">
               GF
             </div>
@@ -39,7 +39,7 @@ export function AgentPageShell({
           <span className="text-[18px] font-light text-line" aria-hidden>/</span>
           <DemoSwitcher slug={slug} label={name} />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {isReady && headerActions}
           <DemoIntro slug={slug} />
         </div>

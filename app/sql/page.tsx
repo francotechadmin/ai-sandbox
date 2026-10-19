@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlusIcon } from "lucide-react";
+import { DatabaseIcon, PlusIcon, SettingsIcon } from "lucide-react";
+import { HeaderButton } from "@/app/_components/HeaderButton";
 import { SqlChat } from "./components/SqlChat";
 import { DatabasePanel } from "./components/DatabasePanel";
 import { AgentPageShell } from "@/app/assistant/components/AgentPageShell";
@@ -48,29 +49,9 @@ export default function SqlPage() {
       isReady={!!(config && settings)}
       headerActions={
         <>
-          <button
-            type="button"
-            onClick={newChat}
-            className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-[13px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
-            aria-label="New chat"
-          >
-            <PlusIcon className="size-3.5" />
-            New
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowDatabase(true)}
-            className="rounded-full border border-white/15 px-3.5 py-1.5 text-[13px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
-          >
-            Database
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowSettings(true)}
-            className="rounded-full border border-white/15 px-3.5 py-1.5 text-[13px] font-medium transition-colors hover:border-white/30 hover:bg-white/[0.04]"
-          >
-            Settings
-          </button>
+          <HeaderButton icon={PlusIcon} label="New" aria-label="New chat" onClick={newChat} />
+          <HeaderButton icon={DatabaseIcon} label="Database" onClick={() => setShowDatabase(true)} />
+          <HeaderButton icon={SettingsIcon} label="Settings" onClick={() => setShowSettings(true)} />
         </>
       }
       panels={
